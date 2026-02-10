@@ -1,0 +1,119 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import type { Competitor, SignalType } from '@/lib/types';
+import { Briefcase, Globe, Newspaper, Building, Filter } from 'lucide-react';
+
+const signalTypes: { value: SignalType; label: string; icon: React.ElementType }[] = [
+  { value: 'hiring', label: 'Hiring', icon: Briefcase },
+  { value: 'digital_footprint', label: 'Digital', icon: Globe },
+  { value: 'news_press', label: 'News & Press', icon: Newspaper },
+  { value: 'asset_watch', label: 'Assets', icon: Building },
+];
+
+interface SignalFiltersProps {
+  competitors: Competitor[];
+  currentType?: string;
+  currentCompetitor?: string;
+  showAll?: boolean;
+}
+
+export function SignalFilters({
+  competitors,
+  currentType,
+  currentCompetitor,
+  showAll,
+}: SignalFiltersProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  function updateFilter(key: string, value: string | undefined) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    router.push(`/dashboard?${params.toString()}`);
+  }
+
+  function clearFilters() {
+    router.push('/dashboard');
+  }
+
+  const hasFilters = currentType || currentCompetitor || showAll;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-muted-foreground">Signal Type:</span>
+        {signalTypes.map((type) => (
+          <Button
+            key={type.value}
+            variant={currentType === type.value ? 'default' : 'outline'}
+            size="sm"
+            onClick={() =>
+              updateFilter('type', currentType === type.value ? undefined : type.value)
+            }
+            className="h-8"
+          >
+            <type.icon className="h-3 w-3 mr-1" />
+            {type.label}
+          </Button>
+        ))}
+      </div>
+
+      {competitors.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-muted-foreground ml-6">Competitor:</span>
+          {competitors.map((c) => (
+            <Button
+              key={c.id}
+              variant={currentCompetitor === c.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() =>
+                updateFilter('competitor', currentCompetitor === c.id ? undefined : c.id)
+              }
+              className="h-8"
+            >
+              {c.name}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-muted-foreground ml-6">Relevance:</span>
+        <Button
+          variant={!showAll ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => updateFilter('relevant', showAll ? undefined : undefined)}
+          className="h-8"
+        >
+          Strategic Only
+        </Button>
+        <Button
+          variant={showAll ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => updateFilter('relevant', showAll ? undefined : 'all')}
+          className="h-8"
+        >
+          Show All
+        </Button>
+
+        {hasFilters && (
+          <Badge
+            variant="secondary"
+            className="cursor-pointer hover:bg-secondary/80 ml-2"
+            onClick={clearFilters}
+          >
+            Clear Filters
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
