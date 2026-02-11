@@ -28,7 +28,7 @@ async function fetchNewsFromPerigon(companyName: string): Promise<NewsArticle[]>
     // Use targeted query: company name + hospitality/real-estate context
     url.searchParams.set(
       'q',
-      `"${companyName}" AND (hospitality OR "short-term rental" OR funding OR acquisition OR partnership OR expansion OR launch)`
+      `"${companyName}" AND (hospitality OR "short-term rental" OR funding OR acquisition OR partnership OR expansion OR launch OR pricing OR "dynamic pricing" OR RevPAR OR layoff OR restructuring OR sustainability OR ESG OR earnings OR "investor" OR IPO OR technology OR "AI concierge" OR franchise)`
     );
     url.searchParams.set('language', 'en');
     url.searchParams.set('sortBy', 'date');
@@ -119,57 +119,45 @@ async function fetchNewsFromGoogleRSS(companyName: string): Promise<NewsArticle[
  * Fetches news from SerpAPI Google News engine as a second source.
  * Catches breaking stories and niche publications Perigon may miss.
  */
-async function fetchNewsFromSerpAPIGoogleNews(companyName: string): Promise<NewsArticle[]> {
-  const apiKey = process.env.SERP_API_KEY;
+async function fetchNewsFromSearchAPI(companyName: string): Promise<NewsArticle[]> {
+  const apiKey = process.env.SEARCHAPI_API_KEY;
   if (!apiKey) return [];
 
   try {
-    const url = new URL('https://serpapi.com/search.json');
+    const url = new URL('https://www.searchapi.io/api/v1/search');
     url.searchParams.set('engine', 'google_news');
     url.searchParams.set(
       'q',
-      `"${companyName}" hospitality OR rental OR apartment OR funding OR acquisition`
+      `"${companyName}" hospitality OR rental OR apartment OR funding OR acquisition OR pricing OR earnings OR layoff OR ESG OR technology OR partnership`
     );
     url.searchParams.set('api_key', apiKey);
-    url.searchParams.set('gl', 'us');
-    url.searchParams.set('hl', 'en');
 
     const response = await fetch(url.toString(), {
       signal: AbortSignal.timeout(20000),
     });
 
     if (!response.ok) {
-      console.error('SerpAPI Google News error:', response.status);
+      console.error('SearchAPI Google News error:', response.status);
       return [];
     }
 
     const data = await response.json();
     const articles: NewsArticle[] = [];
 
-    for (const result of data.news_results || []) {
+    // SearchAPI.io returns organic_results for google_news engine
+    for (const result of data.organic_results || []) {
       articles.push({
         title: result.title || '',
         description: result.snippet || '',
         url: result.link || '',
-        publishedAt: result.date || new Date().toISOString(),
-        source: result.source?.name || 'Google News',
+        publishedAt: result.iso_date || result.date || new Date().toISOString(),
+        source: result.source || 'Google News',
       });
-
-      // Also process sub-stories if available
-      for (const story of result.stories || []) {
-        articles.push({
-          title: story.title || '',
-          description: story.snippet || '',
-          url: story.link || '',
-          publishedAt: story.date || new Date().toISOString(),
-          source: story.source?.name || 'Google News',
-        });
-      }
     }
 
     return articles.slice(0, 15);
   } catch (error) {
-    console.error('SerpAPI Google News fetch error:', error);
+    console.error('SearchAPI Google News fetch error:', error);
     return [];
   }
 }
@@ -177,10 +165,10 @@ async function fetchNewsFromSerpAPIGoogleNews(companyName: string): Promise<News
 export async function collectNewsSignals(competitorId: string, competitorName: string) {
   const supabase = await createServiceClient();
 
-  // Fetch from both Perigon (primary) and SerpAPI Google News (secondary)
+  // Fetch from both Perigon (primary) and SearchAPI Google News (secondary)
   const [perigonArticles, googleNewsArticles] = await Promise.all([
     fetchNewsFromPerigon(competitorName),
-    fetchNewsFromSerpAPIGoogleNews(competitorName),
+    fetchNewsFromSearchAPI(competitorName),
   ]);
 
   // Merge and deduplicate across sources by URL domain + title similarity

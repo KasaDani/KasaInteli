@@ -31,6 +31,7 @@ import {
   ChevronRight,
   Sparkles,
   AlertCircle,
+  FileText,
 } from 'lucide-react';
 import { addCompetitor } from '@/app/(app)/competitors/actions';
 import { toast } from 'sonner';
@@ -79,6 +80,7 @@ export function AddCompetitorDialog() {
   const [linkedinSlug, setLinkedinSlug] = useState('');
   const [appStoreUrl, setAppStoreUrl] = useState('');
   const [glassdoorUrl, setGlassdoorUrl] = useState('');
+  const [secCik, setSecCik] = useState('');
   const [description, setDescription] = useState('');
 
   function resetForm() {
@@ -89,6 +91,7 @@ export function AddCompetitorDialog() {
     setLinkedinSlug('');
     setAppStoreUrl('');
     setGlassdoorUrl('');
+    setSecCik('');
     setDescription('');
     setAutoFields(new Set());
     setPhase('search');
@@ -163,6 +166,9 @@ export function AddCompetitorDialog() {
     }
     if (!formData.has('glassdoor_url') || !formData.get('glassdoor_url')) {
       formData.set('glassdoor_url', glassdoorUrl);
+    }
+    if (!formData.has('sec_cik') || !formData.get('sec_cik')) {
+      formData.set('sec_cik', secCik);
     }
     const result = await addCompetitor(formData);
     setLoading(false);
@@ -443,9 +449,9 @@ export function AddCompetitorDialog() {
                     <ChevronRight className="h-3 w-3" />
                   )}
                   <span className="uppercase tracking-wider">More Sources</span>
-                  {!showAdvanced && (appStoreUrl || glassdoorUrl) && (
+                  {!showAdvanced && (appStoreUrl || glassdoorUrl || secCik) && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">
-                      {[appStoreUrl, glassdoorUrl].filter(Boolean).length} detected
+                      {[appStoreUrl, glassdoorUrl, secCik].filter(Boolean).length} configured
                     </Badge>
                   )}
                 </button>
@@ -487,6 +493,23 @@ export function AddCompetitorDialog() {
                         className="h-9 text-sm"
                       />
                     </div>
+
+                    {/* SEC CIK (for public companies) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <FileText className="h-3 w-3 text-muted-foreground" />
+                        <Label htmlFor="sec_cik" className="text-xs">SEC CIK</Label>
+                      </div>
+                      <Input
+                        id="sec_cik"
+                        name="sec_cik"
+                        placeholder="e.g., 0001819395 (public companies)"
+                        value={secCik}
+                        onChange={(e) => setSecCik(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                      <p className="text-[10px] text-muted-foreground">For SEC filing tracking. Find at sec.gov/cgi-bin/browse-edgar</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -506,6 +529,7 @@ export function AddCompetitorDialog() {
                     setLinkedinSlug('');
                     setAppStoreUrl('');
                     setGlassdoorUrl('');
+                    setSecCik('');
                     setDescription('');
                     setAutoFields(new Set());
                     setShowAdvanced(false);

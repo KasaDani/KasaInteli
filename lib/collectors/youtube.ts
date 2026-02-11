@@ -2,7 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeSignalRelevance } from '@/lib/gemini';
 import crypto from 'crypto';
 
-const SERP_API_KEY = process.env.SERP_API_KEY;
+const SEARCHAPI_KEY = process.env.SEARCHAPI_API_KEY;
 
 interface YouTubeResult {
   title: string;
@@ -15,11 +15,11 @@ interface YouTubeResult {
 }
 
 /**
- * Searches YouTube via SerpAPI for competitor mentions in videos and podcasts.
+ * Searches YouTube via SearchAPI.io for competitor mentions in videos.
  */
 async function searchYouTube(companyName: string): Promise<YouTubeResult[]> {
-  if (!SERP_API_KEY) {
-    console.log('SERP_API_KEY not configured, skipping YouTube collection');
+  if (!SEARCHAPI_KEY) {
+    console.log('SEARCHAPI_API_KEY not configured, skipping YouTube collection');
     return [];
   }
 
@@ -33,12 +33,10 @@ async function searchYouTube(companyName: string): Promise<YouTubeResult[]> {
 
   for (const q of queries) {
     try {
-      const url = new URL('https://serpapi.com/search.json');
+      const url = new URL('https://www.searchapi.io/api/v1/search');
       url.searchParams.set('engine', 'youtube');
-      url.searchParams.set('search_query', q);
-      url.searchParams.set('api_key', SERP_API_KEY);
-      // Sort by upload date for recency
-      url.searchParams.set('sp', 'CAI%253D'); // Sort by upload date
+      url.searchParams.set('q', q);
+      url.searchParams.set('api_key', SEARCHAPI_KEY);
 
       const response = await fetch(url.toString(), {
         signal: AbortSignal.timeout(20000),
@@ -48,20 +46,25 @@ async function searchYouTube(companyName: string): Promise<YouTubeResult[]> {
 
       const data = await response.json();
 
-      for (const result of (data.video_results || []).slice(0, 5)) {
-        // Parse view count from string like "1.2K views"
+      // SearchAPI.io uses "videos" (not "video_results")
+      for (const result of (data.videos || []).slice(0, 5)) {
         let views = 0;
-        const viewStr = result.views?.toString() || '0';
+        const viewStr = (result.views || '0').toString();
         if (viewStr.includes('K')) views = parseFloat(viewStr) * 1000;
         else if (viewStr.includes('M')) views = parseFloat(viewStr) * 1000000;
         else views = parseInt(viewStr.replace(/[^0-9]/g, '')) || 0;
 
+        // SearchAPI.io channel is an object with title and link
+        const channelName = typeof result.channel === 'object'
+          ? result.channel?.title || result.channel?.name || ''
+          : result.channel || '';
+
         results.push({
           title: result.title || '',
-          channel: result.channel?.name || result.channel || '',
+          channel: channelName,
           description: result.description || '',
           url: result.link || '',
-          publishedDate: result.published_date || new Date().toISOString(),
+          publishedDate: result.published_time || result.published_date || new Date().toISOString(),
           views,
           duration: result.length || '',
         });
@@ -71,7 +74,7 @@ async function searchYouTube(companyName: string): Promise<YouTubeResult[]> {
     }
   }
 
-  // Deduplicate by URL within this batch
+  // Deduplicate by URL
   const seen = new Set<string>();
   return results.filter((r) => {
     if (seen.has(r.url)) return false;
@@ -81,21 +84,20 @@ async function searchYouTube(companyName: string): Promise<YouTubeResult[]> {
 }
 
 /**
- * Also search Google for podcast mentions of the competitor.
+ * Search Google for podcast mentions of the competitor.
  */
 async function searchPodcasts(companyName: string): Promise<YouTubeResult[]> {
-  if (!SERP_API_KEY) return [];
+  if (!SEARCHAPI_KEY) return [];
 
   try {
-    const url = new URL('https://serpapi.com/search.json');
+    const url = new URL('https://www.searchapi.io/api/v1/search');
     url.searchParams.set('engine', 'google');
     url.searchParams.set(
       'q',
-      `"${companyName}" podcast episode OR interview site:spotify.com OR site:podcasts.apple.com OR site:podcasts.google.com`
+      `"${companyName}" podcast episode OR interview site:spotify.com OR site:podcasts.apple.com`
     );
-    url.searchParams.set('api_key', SERP_API_KEY);
+    url.searchParams.set('api_key', SEARCHAPI_KEY);
     url.searchParams.set('num', '5');
-    url.searchParams.set('tbs', 'qdr:m'); // Last month
 
     const response = await fetch(url.toString(), {
       signal: AbortSignal.timeout(20000),
@@ -140,7 +142,6 @@ export async function collectYouTubeSignals(
   const allMedia = [...youtubeResults, ...podcastResults];
 
   for (const media of allMedia) {
-    // Deduplicate by URL
     const urlHash = crypto.createHash('md5').update(media.url).digest('hex');
 
     const { data: existingByUrl } = await supabase

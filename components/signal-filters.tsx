@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Competitor, SignalType } from '@/lib/types';
-import { Briefcase, Globe, Newspaper, Building, Filter, Linkedin, MessageCircle, Video, Smartphone, Users } from 'lucide-react';
+import { Briefcase, Globe, Newspaper, Building, Filter, Linkedin, MessageCircle, Video, Smartphone, Users, Star, FileText, DollarSign } from 'lucide-react';
 
 const signalTypes: { value: SignalType; label: string; icon: React.ElementType }[] = [
   { value: 'hiring', label: 'Hiring', icon: Briefcase },
@@ -16,6 +16,9 @@ const signalTypes: { value: SignalType; label: string; icon: React.ElementType }
   { value: 'media_appearance', label: 'Media', icon: Video },
   { value: 'app_update', label: 'App', icon: Smartphone },
   { value: 'employee_sentiment', label: 'Sentiment', icon: Users },
+  { value: 'customer_review', label: 'Reviews', icon: Star },
+  { value: 'financial_filing', label: 'Financial', icon: FileText },
+  { value: 'rate_intelligence', label: 'Pricing', icon: DollarSign },
 ];
 
 interface SignalFiltersProps {

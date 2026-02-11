@@ -58,6 +58,11 @@ export async function generateDossierAnalysis(
   strategic_positioning: string;
   swot: { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
   recommendations: { optimization: string; impact: string; action: string };
+  revenue_pricing: string;
+  technology_experience: string;
+  customer_sentiment: string;
+  financial_health: string;
+  macro_positioning: string;
 }> {
   const signalsSummary = signals
     .map((s) => `[${s.signal_type}] ${s.detected_at}: ${s.title} - ${s.summary}`)
@@ -70,7 +75,7 @@ Generate a comprehensive competitor dossier for "${competitorName}" (${competito
 Here are the intelligence signals collected:
 ${signalsSummary || 'No signals collected yet. Generate based on your knowledge of this company.'}
 
-Respond in JSON format ONLY (no markdown, no code fences):
+Analyze across ALL 7 intelligence categories. Respond in JSON format ONLY (no markdown, no code fences):
 {
   "footprint": {
     "markets": ["list of known markets/cities"],
@@ -78,7 +83,7 @@ Respond in JSON format ONLY (no markdown, no code fences):
     "estimated_units": <number or null>,
     "expansion_trend": "growing/stable/contracting"
   },
-  "operating_model": "<Description of their operating model: master lease, management contracts, hybrid, etc.>",
+  "operating_model": "<Description of their operating model: master lease, management contracts, hybrid, franchise mix, etc.>",
   "strategic_positioning": "<2-3 paragraph analysis of their strategic position, strengths, weaknesses, and recent shifts>",
   "swot": {
     "strengths": ["strength 1", "strength 2", "strength 3"],
@@ -90,8 +95,15 @@ Respond in JSON format ONLY (no markdown, no code fences):
     "optimization": "<What this competitor appears to be optimizing for right now>",
     "impact": "<What risks or opportunities does this create for Kasa?>",
     "action": "<How should Kasa respond? Ignore, Copy, Pre-empt, Partner?>"
-  }
-}`;
+  },
+  "revenue_pricing": "<1-2 paragraphs analyzing their revenue and pricing strategy: dynamic pricing approach, rate positioning (budget/mid/premium), loyalty programs, subscription models, ancillary revenue streams, RevPAR trends if known. Compare to Kasa's positioning.>",
+  "technology_experience": "<1-2 paragraphs on their technology investments and guest experience: mobile check-in, AI/automation, app features, digital loyalty, OTA partnerships, tech stack signals from job postings. Identify tech advantages or gaps vs Kasa.>",
+  "customer_sentiment": "<1-2 paragraphs on customer and brand perception: review score trends across platforms, social media sentiment, brand reputation, NPS indicators, share of voice in hospitality conversations. Flag any reputation risks or advantages.>",
+  "financial_health": "<1-2 paragraphs on financial health and investor narrative: recent earnings themes, margin trends, capital allocation, analyst sentiment, funding status, debt levels. For private companies, assess based on available signals (funding rounds, growth trajectory, hiring patterns).>",
+  "macro_positioning": "<1-2 paragraphs on how they're positioned for macro trends: recession resilience, sustainability/ESG commitments, regulatory exposure, lobbying activity, economic headwind response. What macro bets are they making?>",
+}
+
+Important: Even if signal data is limited for some categories, provide your best analysis based on your knowledge of ${competitorName} and the hospitality industry. Do not leave any field empty — provide at least a brief assessment.`;
 
   const result = await geminiModel.generateContent(prompt);
   const text = result.response.text().trim();
@@ -106,6 +118,11 @@ Respond in JSON format ONLY (no markdown, no code fences):
       strategic_positioning: 'Analysis failed. Please try refreshing.',
       swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
       recommendations: { optimization: 'Unknown', impact: 'Unknown', action: 'Investigate further' },
+      revenue_pricing: 'Analysis pending. Refresh dossier to generate.',
+      technology_experience: 'Analysis pending. Refresh dossier to generate.',
+      customer_sentiment: 'Analysis pending. Refresh dossier to generate.',
+      financial_health: 'Analysis pending. Refresh dossier to generate.',
+      macro_positioning: 'Analysis pending. Refresh dossier to generate.',
     };
   }
 }

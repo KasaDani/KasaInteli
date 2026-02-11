@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Signal } from '@/lib/types';
 import { SignalFeed } from '@/components/signal-feed';
 import { toast } from 'sonner';
-import { Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users } from 'lucide-react';
+import { Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Star, FileText, DollarSign } from 'lucide-react';
 
 const signalTypeLabels: Record<string, { label: string; icon: React.ElementType }> = {
   hiring: { label: 'Hiring', icon: Briefcase },
@@ -17,6 +17,9 @@ const signalTypeLabels: Record<string, { label: string; icon: React.ElementType 
   media_appearance: { label: 'Media', icon: Video },
   app_update: { label: 'App Update', icon: Smartphone },
   employee_sentiment: { label: 'Sentiment', icon: Users },
+  customer_review: { label: 'Reviews', icon: Star },
+  financial_filing: { label: 'Financial', icon: FileText },
+  rate_intelligence: { label: 'Pricing', icon: DollarSign },
 };
 
 interface RealtimeSignalProviderProps {

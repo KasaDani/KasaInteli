@@ -2,7 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeSignalRelevance } from '@/lib/gemini';
 import crypto from 'crypto';
 
-const SERP_API_KEY = process.env.SERP_API_KEY;
+const SEARCHAPI_KEY = process.env.SEARCHAPI_API_KEY;
 
 interface SocialResult {
   title: string;
@@ -17,8 +17,8 @@ interface SocialResult {
  * Targets Reddit, Twitter/X, and Hacker News.
  */
 async function searchSocialMentions(companyName: string): Promise<SocialResult[]> {
-  if (!SERP_API_KEY) {
-    console.log('SERP_API_KEY not configured, skipping social collection');
+  if (!SEARCHAPI_KEY) {
+    console.log('SEARCHAPI_API_KEY not configured, skipping social collection');
     return [];
   }
 
@@ -46,12 +46,11 @@ async function searchSocialMentions(companyName: string): Promise<SocialResult[]
 
   for (const { q, source } of queries) {
     try {
-      const url = new URL('https://serpapi.com/search.json');
+      const url = new URL('https://www.searchapi.io/api/v1/search');
       url.searchParams.set('engine', 'google');
       url.searchParams.set('q', q);
-      url.searchParams.set('api_key', SERP_API_KEY);
+      url.searchParams.set('api_key', SEARCHAPI_KEY);
       url.searchParams.set('num', '5');
-      url.searchParams.set('tbs', 'qdr:w'); // Last week only
 
       const response = await fetch(url.toString(), {
         signal: AbortSignal.timeout(20000),

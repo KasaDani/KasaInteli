@@ -37,6 +37,18 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/collect-rates",
+      "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/collect-reviews",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/collect-filings",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/digest",
       "schedule": "0 14 * * 1"
     }

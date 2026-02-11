@@ -7,7 +7,10 @@ export type SignalType =
   | 'social_mention'
   | 'media_appearance'
   | 'app_update'
-  | 'employee_sentiment';
+  | 'employee_sentiment'
+  | 'customer_review'
+  | 'financial_filing'
+  | 'rate_intelligence';
 
 export interface Competitor {
   id: string;
@@ -18,6 +21,7 @@ export interface Competitor {
   linkedin_slug: string | null;
   app_store_url: string | null;
   glassdoor_url: string | null;
+  sec_cik: string | null;
   description: string | null;
   logo_url: string | null;
   is_active: boolean;
@@ -66,6 +70,11 @@ export interface Dossier {
     impact: string;
     action: string;
   } | null;
+  revenue_pricing: string | null;
+  technology_experience: string | null;
+  customer_sentiment: string | null;
+  financial_health: string | null;
+  macro_positioning: string | null;
   raw_analysis: string | null;
   updated_at: string;
   // Joined

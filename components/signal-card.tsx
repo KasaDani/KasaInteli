@@ -3,7 +3,7 @@
 import type { Signal, SignalType } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Globe, Newspaper, Building, ExternalLink, Linkedin, MessageCircle, Video, Smartphone, Users, Clock, Flame, Zap } from 'lucide-react';
+import { Briefcase, Globe, Newspaper, Building, ExternalLink, Linkedin, MessageCircle, Video, Smartphone, Users, Clock, Flame, Zap, Star, FileText, DollarSign } from 'lucide-react';
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from 'date-fns';
 
 const signalTypeConfig: Record<SignalType, { label: string; icon: React.ElementType; color: string }> = {
@@ -16,6 +16,9 @@ const signalTypeConfig: Record<SignalType, { label: string; icon: React.ElementT
   media_appearance: { label: 'Media', icon: Video, color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
   app_update: { label: 'App Update', icon: Smartphone, color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' },
   employee_sentiment: { label: 'Sentiment', icon: Users, color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' },
+  customer_review: { label: 'Reviews', icon: Star, color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  financial_filing: { label: 'Financial', icon: FileText, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' },
+  rate_intelligence: { label: 'Pricing', icon: DollarSign, color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' },
 };
 
 function RelevanceIndicator({ score }: { score: number }) {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { Signal, SignalType } from '@/lib/types';
 import { SignalCard } from '@/components/signal-card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, ChevronDown, ChevronRight, Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Flame, Zap, Clock } from 'lucide-react';
+import { Activity, ChevronDown, ChevronRight, Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Flame, Zap, Clock, Star, FileText, DollarSign } from 'lucide-react';
 import { differenceInHours, differenceInDays } from 'date-fns';
 
 const signalTypeConfig: Record<SignalType, { label: string; icon: React.ElementType }> = {
@@ -17,6 +17,9 @@ const signalTypeConfig: Record<SignalType, { label: string; icon: React.ElementT
   media_appearance: { label: 'Media', icon: Video },
   app_update: { label: 'App Update', icon: Smartphone },
   employee_sentiment: { label: 'Sentiment', icon: Users },
+  customer_review: { label: 'Reviews', icon: Star },
+  financial_filing: { label: 'Financial', icon: FileText },
+  rate_intelligence: { label: 'Pricing', icon: DollarSign },
 };
 
 interface SignalCluster {

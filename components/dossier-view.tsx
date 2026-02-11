@@ -17,6 +17,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Lightbulb,
+  DollarSign,
+  Cpu,
+  Star,
+  BarChart3,
+  Globe2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { refreshDossier } from '@/app/(app)/competitors/[id]/actions';
@@ -254,6 +259,81 @@ export function DossierView({
               ) : (
                 <p className="text-sm text-muted-foreground">Not yet analyzed.</p>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Revenue & Pricing */}
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <DollarSign className="h-4 w-4" />
+                Revenue &amp; Pricing Strategy
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                {dossier.revenue_pricing || 'Not yet analyzed. Refresh dossier to generate.'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Technology & Guest Experience */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Cpu className="h-4 w-4" />
+                Technology &amp; Experience
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                {dossier.technology_experience || 'Not yet analyzed. Refresh dossier to generate.'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Customer & Brand Sentiment */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Star className="h-4 w-4" />
+                Customer &amp; Brand Sentiment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                {dossier.customer_sentiment || 'Not yet analyzed. Refresh dossier to generate.'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Financial Health */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BarChart3 className="h-4 w-4" />
+                Financial Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                {dossier.financial_health || 'Not yet analyzed. Refresh dossier to generate.'}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Macro Positioning */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Globe2 className="h-4 w-4" />
+                Macro Positioning
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed whitespace-pre-line">
+                {dossier.macro_positioning || 'Not yet analyzed. Refresh dossier to generate.'}
+              </p>
             </CardContent>
           </Card>
 

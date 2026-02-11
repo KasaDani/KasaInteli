@@ -1,9 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+const SEARCHAPI_KEY = process.env.SEARCHAPI_API_KEY;
+const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY;
+
 /**
  * Quick keyword-based signal scoring — avoids Gemini rate limits during bulk collection.
- * Gemini is used later for the dossier, not per-signal.
  */
 function quickScore(
   signalType: string,
@@ -13,25 +15,44 @@ function quickScore(
   const text = `${title} ${description}`.toLowerCase();
 
   const criticalKeywords = [
+    // Financial & Corporate
     'acquisition', 'acquired', 'merger', 'ipo', 'funding', 'raised',
     'series a', 'series b', 'series c', 'series d', 'valuation',
+    'bankruptcy', 'lawsuit', 'sec filing', 'regulatory', 'delisted',
+    // Leadership
     'ceo', 'cto', 'cfo', 'coo', 'chief', 'rebrand', 'pivot',
-    'bankruptcy', 'lawsuit', 'sec filing', 'regulatory',
+    // Revenue & Pricing
+    'dynamic pricing', 'rate strategy', 'revpar', 'revenue management',
+    'subscription model', 'loyalty program',
+    // Restructuring
+    'layoff', 'restructuring', 'reorganization', 'workforce reduction',
   ];
-
   const highKeywords = [
+    // Growth & Portfolio
     'partnership', 'expansion', 'launch', 'new market', 'strategic',
-    'vp', 'vice president', 'director', 'head of', 'general manager',
-    'revenue', 'profit', 'growth', 'investment', 'investor',
-    'technology', 'ai ', 'artificial intelligence', 'platform',
     'new property', 'new location', 'portfolio', 'units',
+    'franchise', 'brand launch', 'pipeline', 'divestiture',
+    // Talent
+    'vp', 'vice president', 'director', 'head of', 'general manager',
+    // Financial
+    'revenue', 'profit', 'growth', 'investment', 'investor',
+    'earnings', 'forward guidance', 'analyst upgrade', 'analyst downgrade',
+    'margin', 'capital allocation', 'buyback',
+    // Technology
+    'technology', 'ai ', 'artificial intelligence', 'platform',
+    'mobile check-in', 'automation', 'concierge', 'ota partnership',
+    // ESG & Macro
+    'esg', 'sustainability', 'carbon neutral', 'recession',
+    'demand softness', 'union', 'wage increase',
   ];
-
   const mediumKeywords = [
     'hire', 'hiring', 'job posting', 'team', 'office',
     'product', 'feature', 'update', 'award', 'recognition',
     'conference', 'event', 'webinar', 'podcast', 'interview',
     'review', 'rating', 'customer', 'experience',
+    'occupancy', 'adr', 'ancillary', 'benefits', 'employer brand',
+    'nps', 'guest satisfaction', 'share of voice',
+    'lobbying', 'regulatory filing', 'trademark',
   ];
 
   if (criticalKeywords.some((kw) => text.includes(kw))) {
@@ -46,7 +67,7 @@ function quickScore(
   return { score: 3, summary: description.slice(0, 300) || title, isRelevant: false };
 }
 
-// ─── News Collection (Perigon + Google RSS) ──────────────────────────
+// ─── News Collection ─────────────────────────────────────────────────
 
 interface NewsArticle {
   title: string;
@@ -56,10 +77,7 @@ interface NewsArticle {
   source: string;
 }
 
-async function fetchPerigonNews(
-  companyName: string,
-  lookbackDays: number
-): Promise<NewsArticle[]> {
+async function fetchPerigonNews(companyName: string, lookbackDays: number): Promise<NewsArticle[]> {
   const apiKey = process.env.PERIGON_API_KEY;
   if (!apiKey) return [];
 
@@ -75,10 +93,7 @@ async function fetchPerigonNews(
     url.searchParams.set('size', '50');
     url.searchParams.set('from', from.toISOString().split('T')[0]);
 
-    const response = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(20000),
-    });
-
+    const response = await fetch(url.toString(), { signal: AbortSignal.timeout(20000) });
     if (!response.ok) return [];
     const data = await response.json();
 
@@ -116,13 +131,7 @@ async function fetchGoogleRSSNews(companyName: string): Promise<NewsArticle[]> {
       const source = /<source[^>]*>([\s\S]*?)<\/source>/.exec(c)?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim();
 
       if (title && link) {
-        items.push({
-          title,
-          description: '',
-          url: link,
-          publishedAt: pubDate || new Date().toISOString(),
-          source: source || 'Google News',
-        });
+        items.push({ title, description: '', url: link, publishedAt: pubDate || new Date().toISOString(), source: source || 'Google News' });
       }
       if (items.length >= 15) break;
     }
@@ -132,33 +141,27 @@ async function fetchGoogleRSSNews(companyName: string): Promise<NewsArticle[]> {
   }
 }
 
-// ─── Job Collection (SerpAPI) ────────────────────────────────────────
-
-interface JobPosting {
-  title: string;
-  location: string;
-  url: string;
-  description: string;
-}
-
-async function fetchJobs(companyName: string): Promise<JobPosting[]> {
-  const apiKey = process.env.SERP_API_KEY;
-  if (!apiKey) return [];
+async function fetchSearchAPINews(companyName: string): Promise<NewsArticle[]> {
+  if (!SEARCHAPI_KEY) return [];
 
   try {
-    const response = await fetch(
-      `https://serpapi.com/search.json?engine=google_jobs&q=${encodeURIComponent(companyName + ' jobs')}&api_key=${apiKey}`,
-      { signal: AbortSignal.timeout(20000) }
-    );
+    const url = new URL('https://www.searchapi.io/api/v1/search');
+    url.searchParams.set('engine', 'google_news');
+    url.searchParams.set('q', `"${companyName}" hospitality OR rental OR apartment OR funding OR acquisition OR pricing OR earnings OR layoff OR ESG OR technology`);
+    url.searchParams.set('api_key', SEARCHAPI_KEY);
+
+    const response = await fetch(url.toString(), { signal: AbortSignal.timeout(20000) });
     if (!response.ok) return [];
 
     const data = await response.json();
-    return (data.jobs_results || []).slice(0, 20).map(
-      (job: { title: string; location: string; share_link?: string; description?: string }) => ({
-        title: job.title,
-        location: job.location || '',
-        url: job.share_link || '',
-        description: (job.description || '').slice(0, 500),
+    // SearchAPI.io returns organic_results for google_news
+    return (data.organic_results || []).map(
+      (r: { title?: string; snippet?: string; link?: string; source?: string; iso_date?: string; date?: string }) => ({
+        title: r.title || '',
+        description: r.snippet || '',
+        url: r.link || '',
+        publishedAt: r.iso_date || r.date || new Date().toISOString(),
+        source: r.source || 'Google News',
       })
     );
   } catch {
@@ -166,46 +169,49 @@ async function fetchJobs(companyName: string): Promise<JobPosting[]> {
   }
 }
 
-// ─── SerpAPI Google News ─────────────────────────────────────────────
+// ─── Job Collection (SearchAPI.io google_jobs) ───────────────────────
 
-async function fetchSerpAPINews(companyName: string): Promise<NewsArticle[]> {
-  const apiKey = process.env.SERP_API_KEY;
-  if (!apiKey) return [];
+interface JobPosting {
+  title: string;
+  location: string;
+  url: string;
+  description: string;
+  team?: string;
+  postedAt?: string;
+}
+
+async function fetchJobs(companyName: string): Promise<JobPosting[]> {
+  if (!SEARCHAPI_KEY) {
+    console.log('[Initial] SEARCHAPI_API_KEY not configured, skipping job collection');
+    return [];
+  }
 
   try {
-    const url = new URL('https://serpapi.com/search.json');
-    url.searchParams.set('engine', 'google_news');
-    url.searchParams.set('q', `"${companyName}"`);
-    url.searchParams.set('api_key', apiKey);
-    url.searchParams.set('gl', 'us');
-    url.searchParams.set('hl', 'en');
+    const url = new URL('https://www.searchapi.io/api/v1/search');
+    url.searchParams.set('engine', 'google_jobs');
+    url.searchParams.set('q', `${companyName} jobs`);
+    url.searchParams.set('api_key', SEARCHAPI_KEY);
 
     const response = await fetch(url.toString(), { signal: AbortSignal.timeout(20000) });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.error('[Initial] SearchAPI google_jobs error:', response.status);
+      return [];
+    }
 
     const data = await response.json();
-    const articles: NewsArticle[] = [];
+    // SearchAPI.io uses "jobs" (not "jobs_results")
+    const jobs = data.jobs || [];
 
-    for (const result of data.news_results || []) {
-      articles.push({
-        title: result.title || '',
-        description: result.snippet || '',
-        url: result.link || '',
-        publishedAt: result.date || new Date().toISOString(),
-        source: result.source?.name || 'Google News',
-      });
-      for (const story of result.stories || []) {
-        articles.push({
-          title: story.title || '',
-          description: story.snippet || '',
-          url: story.link || '',
-          publishedAt: story.date || new Date().toISOString(),
-          source: story.source?.name || 'Google News',
-        });
-      }
-    }
-    return articles.slice(0, 20);
-  } catch {
+    return jobs.slice(0, 25).map(
+      (job: { title: string; location?: string; sharing_link?: string; apply_link?: string; description?: string; company_name?: string }) => ({
+        title: job.title,
+        location: job.location || '',
+        url: job.sharing_link || job.apply_link || '',
+        description: (job.description || '').slice(0, 500),
+      })
+    );
+  } catch (err) {
+    console.error('[Initial] SearchAPI fetch error:', err);
     return [];
   }
 }
@@ -228,10 +234,10 @@ export async function collectInitialSignals(
   const result: CollectionResult = { newsCount: 0, jobsCount: 0, totalInserted: 0, errors: [] };
 
   // ── Collect from all sources in parallel ──
-  const [perigonNews, googleRSSNews, serpNews, jobs] = await Promise.allSettled([
+  const [perigonNews, googleRSSNews, searchAPINews, jobs] = await Promise.allSettled([
     fetchPerigonNews(competitorName, lookbackDays),
     fetchGoogleRSSNews(competitorName),
-    fetchSerpAPINews(competitorName),
+    fetchSearchAPINews(competitorName),
     fetchJobs(competitorName),
   ]);
 
@@ -243,7 +249,7 @@ export async function collectInitialSignals(
   const newsArrays = [
     perigonNews.status === 'fulfilled' ? perigonNews.value : [],
     googleRSSNews.status === 'fulfilled' ? googleRSSNews.value : [],
-    serpNews.status === 'fulfilled' ? serpNews.value : [],
+    searchAPINews.status === 'fulfilled' ? searchAPINews.value : [],
   ];
 
   for (const articles of newsArrays) {
@@ -258,6 +264,8 @@ export async function collectInitialSignals(
   }
 
   const allJobs = jobs.status === 'fulfilled' ? jobs.value : [];
+
+  console.log(`[Initial] ${competitorName}: ${allNews.length} news articles, ${allJobs.length} jobs found`);
 
   // ── Check existing signals to avoid duplicates ──
   const { data: existingSignals } = await supabase
@@ -292,7 +300,6 @@ export async function collectInitialSignals(
     });
 
   if (newsToInsert.length > 0) {
-    // Insert in batches of 20
     for (let i = 0; i < newsToInsert.length; i += 20) {
       const batch = newsToInsert.slice(i, i + 20);
       const { error } = await supabase.from('signals').insert(batch);

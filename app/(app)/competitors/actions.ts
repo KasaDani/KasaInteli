@@ -13,6 +13,7 @@ export async function addCompetitor(formData: FormData) {
   const linkedin_slug = formData.get('linkedin_slug') as string;
   const app_store_url = formData.get('app_store_url') as string;
   const glassdoor_url = formData.get('glassdoor_url') as string;
+  const sec_cik = formData.get('sec_cik') as string;
   const description = formData.get('description') as string;
 
   if (!name || !website) {
@@ -28,6 +29,7 @@ export async function addCompetitor(formData: FormData) {
     linkedin_slug: linkedin_slug || null,
     app_store_url: app_store_url || null,
     glassdoor_url: glassdoor_url || null,
+    sec_cik: sec_cik || null,
     description: description || null,
   };
 
