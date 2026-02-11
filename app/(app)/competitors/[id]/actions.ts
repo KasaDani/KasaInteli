@@ -33,31 +33,60 @@ export async function refreshDossier(competitorId: string) {
       signals || []
     );
 
-    // Upsert dossier (authenticated user has insert/update via RLS)
+    // Try upsert with all fields (including new intelligence category columns)
+    const fullRecord = {
+      competitor_id: competitorId,
+      footprint: analysis.footprint,
+      operating_model: analysis.operating_model,
+      strategic_positioning: analysis.strategic_positioning,
+      swot: analysis.swot,
+      recommendations: analysis.recommendations,
+      revenue_pricing: analysis.revenue_pricing || null,
+      technology_experience: analysis.technology_experience || null,
+      customer_sentiment: analysis.customer_sentiment || null,
+      financial_health: analysis.financial_health || null,
+      macro_positioning: analysis.macro_positioning || null,
+      raw_analysis: JSON.stringify(analysis),
+      updated_at: new Date().toISOString(),
+    };
+
     const { error } = await supabase
       .from('dossiers')
-      .upsert(
-        {
-          competitor_id: competitorId,
-          footprint: analysis.footprint,
-          operating_model: analysis.operating_model,
-          strategic_positioning: analysis.strategic_positioning,
-          swot: analysis.swot,
-          recommendations: analysis.recommendations,
-          revenue_pricing: analysis.revenue_pricing || null,
-          technology_experience: analysis.technology_experience || null,
-          customer_sentiment: analysis.customer_sentiment || null,
-          financial_health: analysis.financial_health || null,
-          macro_positioning: analysis.macro_positioning || null,
-          raw_analysis: JSON.stringify(analysis),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'competitor_id' }
-      );
+      .upsert(fullRecord, { onConflict: 'competitor_id' });
 
     if (error) {
-      console.error('Error upserting dossier:', error);
-      return { error: error.message };
+      // If new columns don't exist yet (migration not run), retry with core fields only
+      const isSchemaError =
+        error.message.includes('schema cache') ||
+        error.message.includes('column') ||
+        error.code === '42703';
+
+      if (isSchemaError) {
+        console.warn('[Dossier] New columns not in schema yet, using core fields only');
+        const { error: fallbackError } = await supabase
+          .from('dossiers')
+          .upsert(
+            {
+              competitor_id: competitorId,
+              footprint: analysis.footprint,
+              operating_model: analysis.operating_model,
+              strategic_positioning: analysis.strategic_positioning,
+              swot: analysis.swot,
+              recommendations: analysis.recommendations,
+              raw_analysis: JSON.stringify(analysis),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'competitor_id' }
+          );
+
+        if (fallbackError) {
+          console.error('Error upserting dossier (fallback):', fallbackError);
+          return { error: fallbackError.message };
+        }
+      } else {
+        console.error('Error upserting dossier:', error);
+        return { error: error.message };
+      }
     }
 
     revalidatePath(`/competitors/${competitorId}`);

@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
 
       // Upsert dossier with all 7 intelligence category analyses
-      await supabase
+      const { error: dossierUpsertError } = await supabase
         .from('dossiers')
         .upsert(
           {
@@ -89,6 +89,26 @@ export async function POST(request: NextRequest) {
           },
           { onConflict: 'competitor_id' }
         );
+
+      // Fallback if new columns don't exist yet (migration 005 not run)
+      if (dossierUpsertError && (dossierUpsertError.message.includes('schema cache') || dossierUpsertError.message.includes('column') || dossierUpsertError.code === '42703')) {
+        console.warn('[Initial] New dossier columns not in schema yet, using core fields');
+        await supabase
+          .from('dossiers')
+          .upsert(
+            {
+              competitor_id: competitorId,
+              footprint: analysis.footprint,
+              operating_model: analysis.operating_model,
+              strategic_positioning: analysis.strategic_positioning,
+              swot: analysis.swot,
+              recommendations: analysis.recommendations,
+              raw_analysis: JSON.stringify(analysis),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'competitor_id' }
+          );
+      }
 
       console.log(`[Initial Collection] Dossier generated for ${competitor.name}`);
     } catch (dossierErr) {

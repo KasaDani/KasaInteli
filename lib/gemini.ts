@@ -6,6 +6,47 @@ export const geminiModel = genAI.getGenerativeModel({
   model: 'gemini-2.0-flash',
 });
 
+/**
+ * Robustly cleans and parses JSON from Gemini's response.
+ * Handles: code fences, trailing commas, BOM, control characters.
+ */
+function cleanAndParseJSON(text: string): Record<string, unknown> {
+  let cleaned = text
+    // Remove markdown code fences
+    .replace(/^```(?:json)?\s*\n?/gm, '')
+    .replace(/\n?```\s*$/gm, '')
+    .trim();
+
+  // Remove BOM and zero-width characters
+  cleaned = cleaned.replace(/^\uFEFF/, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+  // Try parsing as-is first
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Fix trailing commas before } or ]
+    cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
+
+    // Fix unescaped newlines inside strings
+    cleaned = cleaned.replace(/(?<=:\s*"[^"]*)\n(?=[^"]*")/g, '\\n');
+
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // Last resort: find the first { and last } and try to parse that
+      const firstBrace = cleaned.indexOf('{');
+      const lastBrace = cleaned.lastIndexOf('}');
+      if (firstBrace >= 0 && lastBrace > firstBrace) {
+        const jsonSlice = cleaned.slice(firstBrace, lastBrace + 1);
+        // Fix trailing commas again
+        const fixed = jsonSlice.replace(/,\s*([\]}])/g, '$1');
+        return JSON.parse(fixed);
+      }
+      throw new Error('Could not extract valid JSON from response');
+    }
+  }
+}
+
 export async function analyzeSignalRelevance(
   signalType: string,
   title: string,
@@ -36,12 +77,11 @@ Scoring guide:
   const text = result.response.text().trim();
 
   try {
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = cleanAndParseJSON(text);
     return {
-      score: parsed.score ?? 5,
-      summary: parsed.summary ?? 'Unable to analyze.',
-      isRelevant: parsed.isRelevant ?? parsed.score >= 5,
+      score: (parsed.score as number) ?? 5,
+      summary: (parsed.summary as string) ?? 'Unable to analyze.',
+      isRelevant: (parsed.isRelevant as boolean) ?? ((parsed.score as number) >= 5),
     };
   } catch {
     return { score: 5, summary: content.slice(0, 200), isRelevant: true };
@@ -100,29 +140,44 @@ Analyze across ALL 7 intelligence categories. Respond in JSON format ONLY (no ma
   "technology_experience": "<1-2 paragraphs on their technology investments and guest experience: mobile check-in, AI/automation, app features, digital loyalty, OTA partnerships, tech stack signals from job postings. Identify tech advantages or gaps vs Kasa.>",
   "customer_sentiment": "<1-2 paragraphs on customer and brand perception: review score trends across platforms, social media sentiment, brand reputation, NPS indicators, share of voice in hospitality conversations. Flag any reputation risks or advantages.>",
   "financial_health": "<1-2 paragraphs on financial health and investor narrative: recent earnings themes, margin trends, capital allocation, analyst sentiment, funding status, debt levels. For private companies, assess based on available signals (funding rounds, growth trajectory, hiring patterns).>",
-  "macro_positioning": "<1-2 paragraphs on how they're positioned for macro trends: recession resilience, sustainability/ESG commitments, regulatory exposure, lobbying activity, economic headwind response. What macro bets are they making?>",
+  "macro_positioning": "<1-2 paragraphs on how they're positioned for macro trends: recession resilience, sustainability/ESG commitments, regulatory exposure, lobbying activity, economic headwind response. What macro bets are they making?>"
 }
 
-Important: Even if signal data is limited for some categories, provide your best analysis based on your knowledge of ${competitorName} and the hospitality industry. Do not leave any field empty — provide at least a brief assessment.`;
+Important: Even if signal data is limited for some categories, provide your best analysis based on your knowledge of ${competitorName} and the hospitality industry. Do not leave any field empty — provide at least a brief assessment. Ensure your response is valid JSON with no trailing commas.`;
 
   const result = await geminiModel.generateContent(prompt);
   const text = result.response.text().trim();
 
   try {
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    return JSON.parse(cleaned);
-  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = cleanAndParseJSON(text) as any;
+    // Ensure all required fields exist with safe defaults
+    return {
+      footprint: (parsed.footprint as Record<string, unknown>) ?? { markets: [], estimated_properties: null, estimated_units: null, expansion_trend: 'unknown' },
+      operating_model: String(parsed.operating_model ?? 'Not yet analyzed.'),
+      strategic_positioning: String(parsed.strategic_positioning ?? 'Not yet analyzed.'),
+      swot: (parsed.swot as { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] }) ?? { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+      recommendations: (parsed.recommendations as { optimization: string; impact: string; action: string }) ?? { optimization: 'Unknown', impact: 'Unknown', action: 'Investigate further' },
+      revenue_pricing: String(parsed.revenue_pricing ?? 'Not yet analyzed.'),
+      technology_experience: String(parsed.technology_experience ?? 'Not yet analyzed.'),
+      customer_sentiment: String(parsed.customer_sentiment ?? 'Not yet analyzed.'),
+      financial_health: String(parsed.financial_health ?? 'Not yet analyzed.'),
+      macro_positioning: String(parsed.macro_positioning ?? 'Not yet analyzed.'),
+    };
+  } catch (err) {
+    console.error('[Dossier] JSON parse error:', err instanceof Error ? err.message : err);
+    console.error('[Dossier] Raw Gemini response (first 500):', text.slice(0, 500));
     return {
       footprint: { markets: [], estimated_properties: null, estimated_units: null, expansion_trend: 'unknown' },
-      operating_model: 'Unable to determine.',
-      strategic_positioning: 'Analysis failed. Please try refreshing.',
+      operating_model: 'Analysis failed — please click Refresh Dossier to try again.',
+      strategic_positioning: 'Analysis failed — please click Refresh Dossier to try again.',
       swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
       recommendations: { optimization: 'Unknown', impact: 'Unknown', action: 'Investigate further' },
-      revenue_pricing: 'Analysis pending. Refresh dossier to generate.',
-      technology_experience: 'Analysis pending. Refresh dossier to generate.',
-      customer_sentiment: 'Analysis pending. Refresh dossier to generate.',
-      financial_health: 'Analysis pending. Refresh dossier to generate.',
-      macro_positioning: 'Analysis pending. Refresh dossier to generate.',
+      revenue_pricing: 'Analysis failed — please click Refresh Dossier to try again.',
+      technology_experience: 'Analysis failed — please click Refresh Dossier to try again.',
+      customer_sentiment: 'Analysis failed — please click Refresh Dossier to try again.',
+      financial_health: 'Analysis failed — please click Refresh Dossier to try again.',
+      macro_positioning: 'Analysis failed — please click Refresh Dossier to try again.',
     };
   }
 }
