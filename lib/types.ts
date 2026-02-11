@@ -1,10 +1,23 @@
-export type SignalType = 'hiring' | 'digital_footprint' | 'news_press' | 'asset_watch';
+export type SignalType =
+  | 'hiring'
+  | 'digital_footprint'
+  | 'news_press'
+  | 'asset_watch'
+  | 'linkedin_post'
+  | 'social_mention'
+  | 'media_appearance'
+  | 'app_update'
+  | 'employee_sentiment';
 
 export interface Competitor {
   id: string;
   name: string;
   website: string;
   careers_url: string | null;
+  listings_url: string | null;
+  linkedin_slug: string | null;
+  app_store_url: string | null;
+  glassdoor_url: string | null;
   description: string | null;
   logo_url: string | null;
   is_active: boolean;

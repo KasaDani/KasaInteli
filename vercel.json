@@ -2,15 +2,39 @@
   "crons": [
     {
       "path": "/api/cron/collect-jobs",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 */2 * * *"
     },
     {
       "path": "/api/cron/collect-news",
-      "schedule": "0 */6 * * *"
+      "schedule": "30 * * * *"
     },
     {
       "path": "/api/cron/collect-web-changes",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/cron/collect-assets",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/collect-linkedin",
+      "schedule": "15 */2 * * *"
+    },
+    {
+      "path": "/api/cron/collect-social",
+      "schedule": "30 */2 * * *"
+    },
+    {
+      "path": "/api/cron/collect-youtube",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/collect-app-store",
       "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/collect-glassdoor",
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/digest",

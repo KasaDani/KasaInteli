@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateDigestContent } from '@/lib/gemini';
 import { sendSlackMessage } from '@/lib/slack';
+import { sendDigestEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -37,24 +38,33 @@ export async function GET(request: NextRequest) {
       relevance_score: s.relevance_score,
     }));
 
-    // Generate digest using Gemini
+    // Generate digest using Gemini (returns both Slack and HTML formats)
     const digestContent = await generateDigestContent(formattedSignals);
 
     // Send to Slack
-    const sent = await sendSlackMessage(digestContent);
+    const slackSent = await sendSlackMessage(digestContent.slack);
+
+    // Send via email
+    const emailSent = await sendDigestEmail(digestContent.html);
+
+    // Determine delivery channels used
+    const channels: string[] = [];
+    if (slackSent) channels.push('slack');
+    if (emailSent) channels.push('email');
 
     // Store digest record
     await supabase.from('digests').insert({
-      content: digestContent,
+      content: digestContent.slack,
       signals_included: signals.map((s) => s.id),
-      channel: 'slack',
+      channel: channels.join(',') || 'none',
     });
 
     return NextResponse.json({
       success: true,
-      sent,
+      slackSent,
+      emailSent,
       signalCount: signals.length,
-      preview: digestContent.slice(0, 200),
+      preview: digestContent.slack.slice(0, 200),
     });
   } catch (error) {
     console.error('Digest generation error:', error);

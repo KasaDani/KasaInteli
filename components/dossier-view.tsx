@@ -27,6 +27,7 @@ interface DossierViewProps {
   dossier: Dossier | null;
   totalSignals: number;
   relevantSignals: number;
+  urgentSignals?: number;
 }
 
 export function DossierView({
@@ -34,6 +35,7 @@ export function DossierView({
   dossier,
   totalSignals,
   relevantSignals,
+  urgentSignals = 0,
 }: DossierViewProps) {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -75,6 +77,9 @@ export function DossierView({
             </a>
             <span>{totalSignals} total signals</span>
             <span>{relevantSignals} strategic</span>
+            {urgentSignals > 0 && (
+              <span className="text-red-600 dark:text-red-400 font-medium">{urgentSignals} in last 72h</span>
+            )}
           </div>
           {competitor.description && (
             <p className="text-sm text-muted-foreground max-w-2xl">{competitor.description}</p>

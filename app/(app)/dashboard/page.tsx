@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { createClient } from '@/lib/supabase/server';
 import { StatsCards } from '@/components/stats-cards';
-import { SignalFeed } from '@/components/signal-feed';
 import { SignalFilters } from '@/components/signal-filters';
+import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
 import type { Signal, Competitor } from '@/lib/types';
 
 export default async function DashboardPage({
@@ -21,12 +21,16 @@ export default async function DashboardPage({
     .eq('is_active', true)
     .order('name');
 
-  // Build signal query
+  // Build signal query — fetch last 90 days
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
   let query = supabase
     .from('signals')
     .select('*, competitor:competitors(*)')
+    .gte('detected_at', ninetyDaysAgo.toISOString())
     .order('detected_at', { ascending: false })
-    .limit(100);
+    .limit(200);
 
   if (params.type) {
     query = query.eq('signal_type', params.type);
@@ -58,12 +62,21 @@ export default async function DashboardPage({
     .select('*', { count: 'exact', head: true })
     .gte('detected_at', oneWeekAgo.toISOString());
 
+  const seventyTwoHoursAgo = new Date();
+  seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
+
+  const { count: urgentSignals } = await supabase
+    .from('signals')
+    .select('*', { count: 'exact', head: true })
+    .gte('detected_at', seventyTwoHoursAgo.toISOString());
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Intelligence Dashboard</h1>
         <p className="text-muted-foreground mt-1">
           Real-time competitive signals for the hospitality tech landscape.
+          Showing the last 90 days of intelligence.
         </p>
       </div>
 
@@ -71,6 +84,7 @@ export default async function DashboardPage({
         totalSignals={totalSignals || 0}
         relevantSignals={relevantSignals || 0}
         weeklySignals={weeklySignals || 0}
+        urgentSignals={urgentSignals || 0}
         competitorCount={(competitors || []).length}
       />
 
@@ -81,7 +95,7 @@ export default async function DashboardPage({
         showAll={params.relevant === 'all'}
       />
 
-      <SignalFeed signals={(signals as Signal[]) || []} />
+      <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
     </div>
   );
 }

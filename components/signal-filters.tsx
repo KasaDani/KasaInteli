@@ -4,13 +4,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Competitor, SignalType } from '@/lib/types';
-import { Briefcase, Globe, Newspaper, Building, Filter } from 'lucide-react';
+import { Briefcase, Globe, Newspaper, Building, Filter, Linkedin, MessageCircle, Video, Smartphone, Users } from 'lucide-react';
 
 const signalTypes: { value: SignalType; label: string; icon: React.ElementType }[] = [
   { value: 'hiring', label: 'Hiring', icon: Briefcase },
   { value: 'digital_footprint', label: 'Digital', icon: Globe },
-  { value: 'news_press', label: 'News & Press', icon: Newspaper },
+  { value: 'news_press', label: 'News', icon: Newspaper },
   { value: 'asset_watch', label: 'Assets', icon: Building },
+  { value: 'linkedin_post', label: 'LinkedIn', icon: Linkedin },
+  { value: 'social_mention', label: 'Social', icon: MessageCircle },
+  { value: 'media_appearance', label: 'Media', icon: Video },
+  { value: 'app_update', label: 'App', icon: Smartphone },
+  { value: 'employee_sentiment', label: 'Sentiment', icon: Users },
 ];
 
 interface SignalFiltersProps {
@@ -90,7 +95,7 @@ export function SignalFilters({
         <Button
           variant={!showAll ? 'default' : 'outline'}
           size="sm"
-          onClick={() => updateFilter('relevant', showAll ? undefined : undefined)}
+          onClick={() => updateFilter('relevant', undefined)}
           className="h-8"
         >
           Strategic Only

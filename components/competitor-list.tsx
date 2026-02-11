@@ -11,11 +11,17 @@ import {
   ToggleLeft,
   ToggleRight,
   Building2,
+  Activity,
+  ArrowRight,
 } from 'lucide-react';
 import { removeCompetitor, toggleCompetitor } from '@/app/(app)/competitors/actions';
 import { toast } from 'sonner';
 
-export function CompetitorList({ competitors }: { competitors: Competitor[] }) {
+interface CompetitorWithCount extends Competitor {
+  signal_count?: number;
+}
+
+export function CompetitorList({ competitors }: { competitors: CompetitorWithCount[] }) {
   if (competitors.length === 0) {
     return (
       <Card>
@@ -50,7 +56,7 @@ export function CompetitorList({ competitors }: { competitors: Competitor[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {competitors.map((competitor) => (
-        <Card key={competitor.id} className={!competitor.is_active ? 'opacity-60' : ''}>
+        <Card key={competitor.id} className={`group ${!competitor.is_active ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -60,9 +66,17 @@ export function CompetitorList({ competitors }: { competitors: Competitor[] }) {
                   </CardTitle>
                 </Link>
               </div>
-              <Badge variant={competitor.is_active ? 'default' : 'secondary'}>
-                {competitor.is_active ? 'Active' : 'Paused'}
-              </Badge>
+              <div className="flex items-center gap-2">
+                {competitor.signal_count !== undefined && competitor.signal_count > 0 && (
+                  <Badge variant="secondary" className="gap-1">
+                    <Activity className="h-3 w-3" />
+                    {competitor.signal_count}
+                  </Badge>
+                )}
+                <Badge variant={competitor.is_active ? 'default' : 'secondary'}>
+                  {competitor.is_active ? 'Active' : 'Paused'}
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -97,8 +111,9 @@ export function CompetitorList({ competitors }: { competitors: Competitor[] }) {
                 {competitor.is_active ? 'Pause' : 'Resume'}
               </Button>
               <Link href={`/competitors/${competitor.id}`}>
-                <Button variant="ghost" size="sm" className="text-xs">
+                <Button variant="ghost" size="sm" className="text-xs gap-1">
                   View Dossier
+                  <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>
               <div className="flex-1" />

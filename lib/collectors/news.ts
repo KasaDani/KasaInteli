@@ -10,38 +10,64 @@ interface NewsArticle {
   source: string;
 }
 
-async function fetchNewsFromAPI(companyName: string): Promise<NewsArticle[]> {
-  const apiKey = process.env.NEWS_API_KEY;
+/**
+ * Fetches news articles from Perigon API (primary) with Google News RSS as fallback.
+ * Uses targeted search terms for hospitality-industry relevance.
+ */
+async function fetchNewsFromPerigon(companyName: string): Promise<NewsArticle[]> {
+  const apiKey = process.env.PERIGON_API_KEY;
 
   if (!apiKey) {
-    console.log('NEWS_API_KEY not configured, using fallback');
+    console.log('PERIGON_API_KEY not configured, using Google News RSS fallback');
     return fetchNewsFromGoogleRSS(companyName);
   }
 
   try {
-    const query = encodeURIComponent(companyName);
-    const response = await fetch(
-      `https://newsapi.org/v2/everything?q=${query}&sortBy=publishedAt&pageSize=10&language=en&apiKey=${apiKey}`
+    const url = new URL('https://api.goperigon.com/v1/all');
+    url.searchParams.set('apiKey', apiKey);
+    // Use targeted query: company name + hospitality/real-estate context
+    url.searchParams.set(
+      'q',
+      `"${companyName}" AND (hospitality OR "short-term rental" OR funding OR acquisition OR partnership OR expansion OR launch)`
     );
+    url.searchParams.set('language', 'en');
+    url.searchParams.set('sortBy', 'date');
+    url.searchParams.set('size', '15');
+    url.searchParams.set('country', 'us');
+    // Only get articles from the past 14 days
+    const from = new Date();
+    from.setDate(from.getDate() - 14);
+    url.searchParams.set('from', from.toISOString().split('T')[0]);
+
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(15000),
+    });
 
     if (!response.ok) {
-      console.error('NewsAPI error:', response.status);
+      console.error('Perigon API error:', response.status);
       return fetchNewsFromGoogleRSS(companyName);
     }
 
     const data = await response.json();
+
     return (data.articles || []).map(
-      (article: { title: string; description: string; url: string; publishedAt: string; source: { name: string } }) => ({
+      (article: {
+        title: string;
+        description?: string;
+        url: string;
+        pubDate?: string;
+        source?: { name?: string; domain?: string };
+      }) => ({
         title: article.title,
         description: article.description || '',
         url: article.url,
-        publishedAt: article.publishedAt,
-        source: article.source?.name || 'Unknown',
+        publishedAt: article.pubDate || new Date().toISOString(),
+        source: article.source?.name || article.source?.domain || 'Unknown',
       })
     );
   } catch (error) {
-    console.error('NewsAPI fetch error:', error);
-    return [];
+    console.error('Perigon fetch error:', error);
+    return fetchNewsFromGoogleRSS(companyName);
   }
 }
 
@@ -58,7 +84,6 @@ async function fetchNewsFromGoogleRSS(companyName: string): Promise<NewsArticle[
 
     const xml = await response.text();
 
-    // Simple XML parsing for RSS items
     const items: NewsArticle[] = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
@@ -90,25 +115,115 @@ async function fetchNewsFromGoogleRSS(companyName: string): Promise<NewsArticle[
   }
 }
 
+/**
+ * Fetches news from SerpAPI Google News engine as a second source.
+ * Catches breaking stories and niche publications Perigon may miss.
+ */
+async function fetchNewsFromSerpAPIGoogleNews(companyName: string): Promise<NewsArticle[]> {
+  const apiKey = process.env.SERP_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const url = new URL('https://serpapi.com/search.json');
+    url.searchParams.set('engine', 'google_news');
+    url.searchParams.set(
+      'q',
+      `"${companyName}" hospitality OR rental OR apartment OR funding OR acquisition`
+    );
+    url.searchParams.set('api_key', apiKey);
+    url.searchParams.set('gl', 'us');
+    url.searchParams.set('hl', 'en');
+
+    const response = await fetch(url.toString(), {
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!response.ok) {
+      console.error('SerpAPI Google News error:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    const articles: NewsArticle[] = [];
+
+    for (const result of data.news_results || []) {
+      articles.push({
+        title: result.title || '',
+        description: result.snippet || '',
+        url: result.link || '',
+        publishedAt: result.date || new Date().toISOString(),
+        source: result.source?.name || 'Google News',
+      });
+
+      // Also process sub-stories if available
+      for (const story of result.stories || []) {
+        articles.push({
+          title: story.title || '',
+          description: story.snippet || '',
+          url: story.link || '',
+          publishedAt: story.date || new Date().toISOString(),
+          source: story.source?.name || 'Google News',
+        });
+      }
+    }
+
+    return articles.slice(0, 15);
+  } catch (error) {
+    console.error('SerpAPI Google News fetch error:', error);
+    return [];
+  }
+}
+
 export async function collectNewsSignals(competitorId: string, competitorName: string) {
   const supabase = await createServiceClient();
-  const articles = await fetchNewsFromAPI(competitorName);
+
+  // Fetch from both Perigon (primary) and SerpAPI Google News (secondary)
+  const [perigonArticles, googleNewsArticles] = await Promise.all([
+    fetchNewsFromPerigon(competitorName),
+    fetchNewsFromSerpAPIGoogleNews(competitorName),
+  ]);
+
+  // Merge and deduplicate across sources by URL domain + title similarity
+  const seenUrls = new Set<string>();
+  const seenTitles = new Set<string>();
+  const articles: NewsArticle[] = [];
+
+  for (const article of [...perigonArticles, ...googleNewsArticles]) {
+    const urlKey = article.url.toLowerCase();
+    const titleKey = article.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (seenUrls.has(urlKey) || seenTitles.has(titleKey)) continue;
+    seenUrls.add(urlKey);
+    seenTitles.add(titleKey);
+    articles.push(article);
+  }
 
   const results = [];
 
   for (const article of articles) {
-    // Deduplicate by URL hash
+    // Deduplicate by URL hash -- use source_url field for reliable matching
     const urlHash = crypto.createHash('md5').update(article.url).digest('hex');
 
-    const { data: existing } = await supabase
+    const { data: existingByUrl } = await supabase
       .from('signals')
       .select('id')
       .eq('competitor_id', competitorId)
       .eq('signal_type', 'news_press')
-      .eq('raw_data->>url_hash', urlHash)
+      .eq('source_url', article.url)
       .maybeSingle();
 
-    if (existing) continue;
+    if (existingByUrl) continue;
+
+    // Also check by title similarity (in case same article has different URLs)
+    const { data: existingByTitle } = await supabase
+      .from('signals')
+      .select('id')
+      .eq('competitor_id', competitorId)
+      .eq('signal_type', 'news_press')
+      .eq('title', article.title)
+      .maybeSingle();
+
+    if (existingByTitle) continue;
 
     const analysis = await analyzeSignalRelevance(
       'News Article',
@@ -123,7 +238,9 @@ export async function collectNewsSignals(competitorId: string, competitorName: s
       title: article.title,
       summary: analysis.summary,
       raw_data: {
-        ...article,
+        description: article.description,
+        source: article.source,
+        publishedAt: article.publishedAt,
         url_hash: urlHash,
       },
       source_url: article.url,

@@ -13,6 +13,17 @@ export default async function CompetitorsPage() {
     .select('*')
     .order('created_at', { ascending: false });
 
+  // Fetch signal counts per competitor
+  const competitorsWithCounts = await Promise.all(
+    (competitors || []).map(async (comp) => {
+      const { count } = await supabase
+        .from('signals')
+        .select('*', { count: 'exact', head: true })
+        .eq('competitor_id', comp.id);
+      return { ...comp, signal_count: count || 0 };
+    })
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -25,7 +36,7 @@ export default async function CompetitorsPage() {
         <AddCompetitorDialog />
       </div>
 
-      <CompetitorList competitors={(competitors as Competitor[]) || []} />
+      <CompetitorList competitors={(competitorsWithCounts as (Competitor & { signal_count: number })[]) || []} />
     </div>
   );
 }

@@ -1,12 +1,11 @@
 'use server';
 
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { generateDossierAnalysis } from '@/lib/gemini';
 import { revalidatePath } from 'next/cache';
 
 export async function refreshDossier(competitorId: string) {
   const supabase = await createClient();
-  const serviceClient = await createServiceClient();
 
   // Get competitor info
   const { data: competitor } = await supabase
@@ -34,8 +33,8 @@ export async function refreshDossier(competitorId: string) {
       signals || []
     );
 
-    // Upsert dossier using service client
-    const { error } = await serviceClient
+    // Upsert dossier (authenticated user has insert/update via RLS)
+    const { error } = await supabase
       .from('dossiers')
       .upsert(
         {
