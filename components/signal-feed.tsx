@@ -6,6 +6,10 @@ import { SignalCard } from '@/components/signal-card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, ChevronDown, ChevronRight, Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Flame, Zap, Clock, Star, FileText, DollarSign } from 'lucide-react';
 import { differenceInHours, differenceInDays } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LottieState } from '@/components/motion/lottie-state';
+
+const ease = [0.21, 0.47, 0.32, 0.98] as const;
 
 const signalTypeConfig: Record<SignalType, { label: string; icon: React.ElementType }> = {
   hiring: { label: 'Hiring', icon: Briefcase },
@@ -154,15 +158,25 @@ function SignalClusterView({ cluster, highlightIds }: { cluster: SignalCluster; 
         <ClusterHeader cluster={cluster} />
       </button>
 
-      {expanded && (
-        <div className="border-t space-y-0">
-          {cluster.signals.map((signal) => (
-            <div key={signal.id} className="border-b last:border-b-0">
-              <SignalCard signal={signal} highlight={highlightIds?.has(signal.id)} />
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease }}
+            className="border-t overflow-hidden"
+          >
+            <div className="space-y-0">
+              {cluster.signals.map((signal) => (
+                <div key={signal.id} className="border-b last:border-b-0">
+                  <SignalCard signal={signal} highlight={highlightIds?.has(signal.id)} />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {!expanded && (
         <div className="px-4 pb-3">
@@ -182,14 +196,19 @@ function SignalClusterView({ cluster, highlightIds }: { cluster: SignalCluster; 
 export function SignalFeed({ signals, highlightIds }: { signals: Signal[]; highlightIds?: Set<string> }) {
   if (signals.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Activity className="h-12 w-12 text-muted-foreground mb-4" />
+      <motion.div
+        className="flex flex-col items-center justify-center py-16 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease }}
+      >
+        <LottieState name="empty-signals" size={160} className="mb-4" />
         <h3 className="text-lg font-semibold">No signals detected yet</h3>
         <p className="text-muted-foreground mt-1 max-w-md">
           Signals will appear here as the system monitors your competitors.
           Add a competitor to trigger an initial intelligence scan.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
@@ -216,22 +235,46 @@ export function SignalFeed({ signals, highlightIds }: { signals: Signal[]; highl
                   {config.label}
                 </h3>
               </div>
-              <div className="flex-1 h-px bg-border" />
+              <motion.div
+                className="flex-1 h-px bg-border"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, ease }}
+                style={{ originX: 0 }}
+              />
               <Badge variant="outline" className="text-xs">
                 {totalSignals} signal{totalSignals !== 1 ? 's' : ''}
               </Badge>
             </div>
 
             {/* Clusters */}
-            <div className="space-y-3">
+            <motion.div
+              className="space-y-3"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-30px' }}
+              variants={{
+                hidden: {},
+                visible: { transition: { staggerChildren: 0.06 } },
+              }}
+            >
               {clusters.map((cluster) => (
-                <SignalClusterView
+                <motion.div
                   key={`${cluster.competitorName}-${cluster.signalType}`}
-                  cluster={cluster}
-                  highlightIds={highlightIds}
-                />
+                  variants={{
+                    hidden: { opacity: 0, y: 12 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.35, ease }}
+                >
+                  <SignalClusterView
+                    cluster={cluster}
+                    highlightIds={highlightIds}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         );
       })}

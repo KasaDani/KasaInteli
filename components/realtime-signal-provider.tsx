@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Signal } from '@/lib/types';
 import { SignalFeed } from '@/components/signal-feed';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Star, FileText, DollarSign } from 'lucide-react';
 
 const signalTypeLabels: Record<string, { label: string; icon: React.ElementType }> = {
@@ -116,15 +117,22 @@ export function RealtimeSignalProvider({ initialSignals }: RealtimeSignalProvide
 
   return (
     <div>
-      {/* Unread banner */}
-      {unreadCount > 0 && (
-        <button
-          onClick={clearUnread}
-          className="w-full mb-4 py-2 px-4 bg-primary/10 border border-primary/20 rounded-lg text-sm font-medium text-primary hover:bg-primary/15 transition-colors animate-pulse"
-        >
-          {unreadCount} new signal{unreadCount !== 1 ? 's' : ''} detected — click to dismiss
-        </button>
-      )}
+      {/* Unread banner with AnimatePresence */}
+      <AnimatePresence>
+        {unreadCount > 0 && (
+          <motion.button
+            key="unread-banner"
+            initial={{ opacity: 0, y: -16, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto', marginBottom: 16 }}
+            exit={{ opacity: 0, y: -16, height: 0, marginBottom: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            onClick={clearUnread}
+            className="w-full py-2 px-4 bg-primary/10 border border-primary/20 rounded-lg text-sm font-medium text-primary hover:bg-primary/15 transition-colors overflow-hidden"
+          >
+            {unreadCount} new signal{unreadCount !== 1 ? 's' : ''} detected — click to dismiss
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Wrap signals with highlight data */}
       <SignalFeed

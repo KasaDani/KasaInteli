@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { CompetitorList } from '@/components/competitor-list';
 import { AddCompetitorDialog } from '@/components/add-competitor-dialog';
+import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Competitor } from '@/lib/types';
 
 export default async function CompetitorsPage() {
@@ -26,17 +27,21 @@ export default async function CompetitorsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Competitors</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage the companies you&apos;re tracking for competitive intelligence.
-          </p>
+      <AnimatedSection>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Competitors</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage the companies you&apos;re tracking for competitive intelligence.
+            </p>
+          </div>
+          <AddCompetitorDialog />
         </div>
-        <AddCompetitorDialog />
-      </div>
+      </AnimatedSection>
 
-      <CompetitorList competitors={(competitorsWithCounts as (Competitor & { signal_count: number })[]) || []} />
+      <AnimatedSection delay={0.1}>
+        <CompetitorList competitors={(competitorsWithCounts as (Competitor & { signal_count: number })[]) || []} />
+      </AnimatedSection>
     </div>
   );
 }

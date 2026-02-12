@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { DossierView } from '@/components/dossier-view';
 import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
+import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Competitor, Signal, Dossier } from '@/lib/types';
 
 export default async function CompetitorDossierPage({
@@ -62,23 +63,27 @@ export default async function CompetitorDossierPage({
 
   return (
     <div className="space-y-8">
-      <DossierView
-        competitor={competitor as Competitor}
-        dossier={(dossier as Dossier) || null}
-        totalSignals={totalSignals || 0}
-        relevantSignals={relevantSignals || 0}
-        urgentSignals={urgentSignals || 0}
-      />
+      <AnimatedSection>
+        <DossierView
+          competitor={competitor as Competitor}
+          dossier={(dossier as Dossier) || null}
+          totalSignals={totalSignals || 0}
+          relevantSignals={relevantSignals || 0}
+          urgentSignals={urgentSignals || 0}
+        />
+      </AnimatedSection>
 
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Signal Timeline</h2>
-          <span className="text-sm text-muted-foreground">
-            Last 90 days · {(signals || []).length} signals
-          </span>
+      <AnimatedSection delay={0.15}>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Signal Timeline</h2>
+            <span className="text-sm text-muted-foreground">
+              Last 90 days · {(signals || []).length} signals
+            </span>
+          </div>
+          <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
         </div>
-        <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
-      </div>
+      </AnimatedSection>
     </div>
   );
 }

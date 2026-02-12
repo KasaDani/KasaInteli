@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShimmerSkeleton } from '@/components/motion/shimmer-skeleton';
+
+const ease = [0.21, 0.47, 0.32, 0.98] as const;
 
 interface CompetitorTrend {
   name: string;
@@ -31,11 +35,13 @@ function Sparkline({
   color,
   width = 140,
   height = 32,
+  animate: shouldAnimate = false,
 }: {
   data: number[];
   color: string;
   width?: number;
   height?: number;
+  animate?: boolean;
 }) {
   const max = Math.max(...data, 1);
   const points = data.map((v, i) => ({
@@ -59,7 +65,28 @@ function Sparkline({
         </linearGradient>
       </defs>
       <path d={areaD} fill={`url(#grad-${color})`} />
-      <path d={pathD} fill="none" className={`stroke-current ${color.replace('fill-', 'text-')}`} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {shouldAnimate ? (
+        <motion.path
+          d={pathD}
+          fill="none"
+          className={`stroke-current ${color.replace('fill-', 'text-')}`}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.2, ease }}
+        />
+      ) : (
+        <path
+          d={pathD}
+          fill="none"
+          className={`stroke-current ${color.replace('fill-', 'text-')}`}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
       {/* Dot on the last point */}
       {points.length > 0 && (
         <circle
@@ -132,12 +159,11 @@ export function SignalTrends() {
       <Card>
         <CardContent className="py-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-muted animate-pulse">
+            <div className="p-2 rounded-lg bg-muted">
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
             </div>
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
-              <div className="h-8 bg-muted rounded w-full animate-pulse" />
+            <div className="flex-1">
+              <ShimmerSkeleton lines={3} />
             </div>
           </div>
         </CardContent>
@@ -159,13 +185,29 @@ export function SignalTrends() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.1 } },
+          }}
+        >
           {data.trends.map((competitor, idx) => {
             const colorSet = COMPETITOR_COLORS[idx % COMPETITOR_COLORS.length];
             const total = competitor.weeklyTotals.reduce((s, v) => s + v, 0);
 
             return (
-              <div key={competitor.name} className="flex items-center gap-4">
+              <motion.div
+                key={competitor.name}
+                className="flex items-center gap-4"
+                variants={{
+                  hidden: { opacity: 0, x: -16 },
+                  visible: { opacity: 1, x: 0 },
+                }}
+                transition={{ duration: 0.4, ease }}
+              >
                 {/* Competitor name + dot */}
                 <div className="flex items-center gap-2 w-28 shrink-0">
                   <div className={`w-2.5 h-2.5 rounded-full ${colorSet.bg}`} />
@@ -174,7 +216,7 @@ export function SignalTrends() {
 
                 {/* Sparkline */}
                 <div className="flex-1">
-                  <Sparkline data={competitor.weeklyTotals} color={colorSet.bar} />
+                  <Sparkline data={competitor.weeklyTotals} color={colorSet.bar} animate />
                 </div>
 
                 {/* Stats */}
@@ -185,7 +227,7 @@ export function SignalTrends() {
                   </div>
                   <VelocityBadge velocity={competitor.velocity} />
                 </div>
-              </div>
+              </motion.div>
             );
           })}
 
@@ -206,7 +248,7 @@ export function SignalTrends() {
             </div>
             <div className="w-24 shrink-0" />
           </div>
-        </div>
+        </motion.div>
       </CardContent>
     </Card>
   );

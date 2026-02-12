@@ -5,6 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Brain, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LottieState } from '@/components/motion/lottie-state';
+import { ShimmerSkeleton } from '@/components/motion/shimmer-skeleton';
+
+const ease = [0.21, 0.47, 0.32, 0.98] as const;
 
 interface CompetitorSnapshot {
   name: string;
@@ -54,12 +59,11 @@ export function ExecutiveSummary() {
       <Card className="border-primary/20 bg-gradient-to-r from-primary/[0.04] to-primary/[0.02]">
         <CardContent className="py-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 animate-pulse">
-              <Brain className="h-5 w-5 text-primary" />
+            <div className="flex flex-col items-center gap-2">
+              <LottieState name="loading-ai" size={48} />
             </div>
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
-              <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+            <div className="flex-1">
+              <ShimmerSkeleton lines={3} />
             </div>
           </div>
         </CardContent>
@@ -87,36 +91,58 @@ export function ExecutiveSummary() {
                 {data.totalSignals} strategic signals
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </motion.div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* AI Summary */}
-        <p className="text-sm leading-relaxed">{data.summary}</p>
+        <motion.p
+          className="text-sm leading-relaxed"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
+        >
+          {data.summary}
+        </motion.p>
 
         {/* Competitor Activity Indicators */}
         {data.competitors.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
+          <motion.div
+            className="flex flex-wrap gap-2 pt-1"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: { transition: { staggerChildren: 0.06, delayChildren: 0.2 } },
+            }}
+          >
             {data.competitors
               .sort((a, b) => b.signalCount - a.signalCount)
               .map((c) => (
-                <div
+                <motion.div
                   key={c.name}
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.9 },
+                    visible: { opacity: 1, scale: 1 },
+                  }}
+                  transition={{ duration: 0.3, ease }}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background border text-xs"
                 >
                   <div
                     className={`w-2 h-2 rounded-full ${
                       c === mostActive
-                        ? 'bg-red-500 animate-pulse'
+                        ? 'bg-red-500'
                         : c.signalCount > 2
                           ? 'bg-yellow-500'
                           : 'bg-green-500'
@@ -124,9 +150,9 @@ export function ExecutiveSummary() {
                   />
                   <span className="font-medium">{c.name}</span>
                   <span className="text-muted-foreground">{c.signalCount}</span>
-                </div>
+                </motion.div>
               ))}
-          </div>
+          </motion.div>
         )}
 
         {/* Timestamp */}

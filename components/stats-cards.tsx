@@ -1,5 +1,10 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, AlertTriangle, TrendingUp, Building2, Flame } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { StaggeredList } from '@/components/motion/staggered-list';
+import { CountUp } from '@/components/motion/count-up';
 
 interface StatsCardsProps {
   totalSignals: number;
@@ -55,28 +60,32 @@ export function StatsCards({
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <StaggeredList className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {stats.map((stat) => (
-        <Card
+        <motion.div
           key={stat.title}
-          className={stat.highlight ? 'border-red-500/40 bg-red-500/[0.03]' : ''}
+          whileHover={{ y: -2, transition: { duration: 0.2 } }}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {stat.title}
-            </CardTitle>
-            <stat.icon
-              className={`h-4 w-4 ${stat.highlight ? 'text-red-500' : 'text-muted-foreground'}`}
-            />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${stat.highlight ? 'text-red-600 dark:text-red-400' : ''}`}>
-              {stat.value}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-          </CardContent>
-        </Card>
+          <Card
+            className={`h-full transition-shadow duration-200 hover:shadow-md ${stat.highlight ? 'border-red-500/40 bg-red-500/[0.03]' : ''}`}
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <stat.icon
+                className={`h-4 w-4 ${stat.highlight ? 'text-red-500' : 'text-muted-foreground'}`}
+              />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${stat.highlight ? 'text-red-600 dark:text-red-400' : ''}`}>
+                <CountUp target={stat.value} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
-    </div>
+    </StaggeredList>
   );
 }

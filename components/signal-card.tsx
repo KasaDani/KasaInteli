@@ -3,6 +3,7 @@
 import type { Signal, SignalType } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import { Briefcase, Globe, Newspaper, Building, ExternalLink, Linkedin, MessageCircle, Video, Smartphone, Users, Clock, Flame, Zap, Star, FileText, DollarSign } from 'lucide-react';
 import { format, formatDistanceToNow, differenceInHours, differenceInDays } from 'date-fns';
 
@@ -45,7 +46,7 @@ function UrgencyBadge({ detectedAt }: { detectedAt: string }) {
 
   if (hoursAgo < 72) {
     return (
-      <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 gap-1 text-[10px] px-1.5 py-0 animate-pulse">
+      <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30 gap-1 text-[10px] px-1.5 py-0">
         <Flame className="h-2.5 w-2.5" />
         {hoursAgo < 1 ? 'Just now' : hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.floor(hoursAgo / 24)}d ago`}
       </Badge>
@@ -82,59 +83,70 @@ export function SignalCard({ signal, highlight }: { signal: Signal; highlight?: 
       : '';
 
   return (
-    <Card className={`transition-colors hover:bg-accent/30 ${urgencyBorder} ${highlight ? 'ring-2 ring-primary/40 animate-pulse' : ''}`}>
-      <CardContent className="py-4">
-        <div className="flex items-start gap-3">
-          {/* Icon */}
-          <div className="mt-0.5 shrink-0">
-            <div className={`p-2 rounded-lg ${config.color}`}>
-              <Icon className="h-4 w-4" />
+    <motion.div
+      whileHover={{ y: -1, transition: { duration: 0.2 } }}
+      {...(highlight
+        ? {
+            initial: { opacity: 0, scale: 0.97, y: 8 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            transition: { type: 'spring', stiffness: 300, damping: 20 },
+          }
+        : {})}
+    >
+      <Card className={`transition-shadow duration-200 hover:shadow-md ${urgencyBorder} ${highlight ? 'ring-2 ring-primary/40' : ''}`}>
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            {/* Icon */}
+            <div className="mt-0.5 shrink-0">
+              <div className={`p-2 rounded-lg ${config.color}`}>
+                <Icon className="h-4 w-4" />
+              </div>
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-medium text-sm leading-tight">{signal.title}</h4>
-              <UrgencyBadge detectedAt={signal.detected_at} />
-              {signal.is_strategically_relevant && signal.relevance_score >= 7 && (
-                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                  Strategic
+            {/* Content */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-medium text-sm leading-tight">{signal.title}</h4>
+                <UrgencyBadge detectedAt={signal.detected_at} />
+                {signal.is_strategically_relevant && signal.relevance_score >= 7 && (
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                    Strategic
+                  </Badge>
+                )}
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{signal.summary}</p>
+
+              <div className="flex items-center gap-3 pt-1 flex-wrap">
+                {signal.competitor && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {signal.competitor.name}
+                  </span>
+                )}
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  {config.label}
                 </Badge>
-              )}
-            </div>
-
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{signal.summary}</p>
-
-            <div className="flex items-center gap-3 pt-1 flex-wrap">
-              {signal.competitor && (
-                <span className="text-xs font-medium text-muted-foreground">
-                  {signal.competitor.name}
+                <RelevanceIndicator score={signal.relevance_score} />
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDistanceToNow(detectedDate, { addSuffix: true })}
                 </span>
-              )}
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                {config.label}
-              </Badge>
-              <RelevanceIndicator score={signal.relevance_score} />
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(detectedDate, { addSuffix: true })}
-              </span>
-              {signal.source_url && (
-                <a
-                  href={signal.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Source
-                </a>
-              )}
+                {signal.source_url && (
+                  <a
+                    href={signal.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Source
+                  </a>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

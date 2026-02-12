@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   Building2,
@@ -35,47 +36,69 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Top navigation bar */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <motion.header
+        initial={{ y: -56 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      >
         <div className="max-w-7xl mx-auto flex h-14 items-center px-4 sm:px-6">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <motion.div
+              whileHover={{ rotate: [0, -5, 5, 0] }}
+              transition={{ duration: 0.5 }}
+              className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"
+            >
               <Shield className="w-4 h-4 text-primary-foreground" />
-            </div>
+            </motion.div>
             <span className="font-semibold text-lg hidden sm:inline">Kasa Intel</span>
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  pathname === item.href || pathname.startsWith(item.href + '/')
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'relative flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    isActive
+                      ? 'text-accent-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute inset-0 bg-accent rounded-md"
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      style={{ zIndex: -1 }}
+                    />
+                  )}
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="flex-1" />
 
           {/* Sign out */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="hidden md:flex items-center gap-2 text-muted-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
+          <motion.div whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="hidden md:flex items-center gap-2 text-muted-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </motion.div>
 
           {/* Mobile menu button */}
           <Button
@@ -89,34 +112,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t px-4 py-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  pathname === item.href || pathname.startsWith(item.href + '/')
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            ))}
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full"
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t overflow-hidden"
             >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </button>
-          </div>
-        )}
-      </header>
+              <div className="px-4 py-3 space-y-1">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                      pathname === item.href || pathname.startsWith(item.href + '/')
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                ))}
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">{children}</main>

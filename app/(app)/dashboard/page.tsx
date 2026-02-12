@@ -6,6 +6,7 @@ import { SignalFilters } from '@/components/signal-filters';
 import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
 import { ExecutiveSummary } from '@/components/executive-summary';
 import { SignalTrends } from '@/components/signal-trends';
+import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Signal, Competitor } from '@/lib/types';
 
 export default async function DashboardPage({
@@ -74,34 +75,46 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Intelligence Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Real-time competitive signals for the hospitality tech landscape.
-          Showing the last 90 days of intelligence.
-        </p>
-      </div>
+      <AnimatedSection>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Intelligence Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Real-time competitive signals for the hospitality tech landscape.
+            Showing the last 90 days of intelligence.
+          </p>
+        </div>
+      </AnimatedSection>
 
-      <ExecutiveSummary />
+      <AnimatedSection delay={0.1}>
+        <ExecutiveSummary />
+      </AnimatedSection>
 
-      <StatsCards
-        totalSignals={totalSignals || 0}
-        relevantSignals={relevantSignals || 0}
-        weeklySignals={weeklySignals || 0}
-        urgentSignals={urgentSignals || 0}
-        competitorCount={(competitors || []).length}
-      />
+      <AnimatedSection delay={0.15}>
+        <StatsCards
+          totalSignals={totalSignals || 0}
+          relevantSignals={relevantSignals || 0}
+          weeklySignals={weeklySignals || 0}
+          urgentSignals={urgentSignals || 0}
+          competitorCount={(competitors || []).length}
+        />
+      </AnimatedSection>
 
-      <SignalTrends />
+      <AnimatedSection delay={0.2}>
+        <SignalTrends />
+      </AnimatedSection>
 
-      <SignalFilters
-        competitors={(competitors as Competitor[]) || []}
-        currentType={params.type}
-        currentCompetitor={params.competitor}
-        showAll={params.relevant === 'all'}
-      />
+      <AnimatedSection delay={0.25}>
+        <SignalFilters
+          competitors={(competitors as Competitor[]) || []}
+          currentType={params.type}
+          currentCompetitor={params.competitor}
+          showAll={params.relevant === 'all'}
+        />
+      </AnimatedSection>
 
-      <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
+      <AnimatedSection delay={0.3}>
+        <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
+      </AnimatedSection>
     </div>
   );
 }

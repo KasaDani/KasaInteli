@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Competitor, SignalType } from '@/lib/types';
 import { Briefcase, Globe, Newspaper, Building, Filter, Linkedin, MessageCircle, Video, Smartphone, Users, Star, FileText, DollarSign } from 'lucide-react';
 
@@ -59,18 +60,19 @@ export function SignalFilters({
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium text-muted-foreground">Signal Type:</span>
         {signalTypes.map((type) => (
-          <Button
-            key={type.value}
-            variant={currentType === type.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() =>
-              updateFilter('type', currentType === type.value ? undefined : type.value)
-            }
-            className="h-8"
-          >
-            <type.icon className="h-3 w-3 mr-1" />
-            {type.label}
-          </Button>
+          <motion.div key={type.value} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant={currentType === type.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() =>
+                updateFilter('type', currentType === type.value ? undefined : type.value)
+              }
+              className="h-8"
+            >
+              <type.icon className="h-3 w-3 mr-1" />
+              {type.label}
+            </Button>
+          </motion.div>
         ))}
       </div>
 
@@ -78,49 +80,63 @@ export function SignalFilters({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-muted-foreground ml-6">Competitor:</span>
           {competitors.map((c) => (
-            <Button
-              key={c.id}
-              variant={currentCompetitor === c.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() =>
-                updateFilter('competitor', currentCompetitor === c.id ? undefined : c.id)
-              }
-              className="h-8"
-            >
-              {c.name}
-            </Button>
+            <motion.div key={c.id} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant={currentCompetitor === c.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() =>
+                  updateFilter('competitor', currentCompetitor === c.id ? undefined : c.id)
+                }
+                className="h-8"
+              >
+                {c.name}
+              </Button>
+            </motion.div>
           ))}
         </div>
       )}
 
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-muted-foreground ml-6">Relevance:</span>
-        <Button
-          variant={!showAll ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => updateFilter('relevant', undefined)}
-          className="h-8"
-        >
-          Strategic Only
-        </Button>
-        <Button
-          variant={showAll ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => updateFilter('relevant', showAll ? undefined : 'all')}
-          className="h-8"
-        >
-          Show All
-        </Button>
-
-        {hasFilters && (
-          <Badge
-            variant="secondary"
-            className="cursor-pointer hover:bg-secondary/80 ml-2"
-            onClick={clearFilters}
+        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant={!showAll ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => updateFilter('relevant', undefined)}
+            className="h-8"
           >
-            Clear Filters
-          </Badge>
-        )}
+            Strategic Only
+          </Button>
+        </motion.div>
+        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant={showAll ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => updateFilter('relevant', showAll ? undefined : 'all')}
+            className="h-8"
+          >
+            Show All
+          </Button>
+        </motion.div>
+
+        <AnimatePresence>
+          {hasFilters && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Badge
+                variant="secondary"
+                className="cursor-pointer hover:bg-secondary/80 ml-2"
+                onClick={clearFilters}
+              >
+                Clear Filters
+              </Badge>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
