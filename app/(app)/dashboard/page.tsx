@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { StatsCards } from '@/components/stats-cards';
 import { SignalFilters } from '@/components/signal-filters';
 import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
+import { ExecutiveSummary } from '@/components/executive-summary';
+import { SignalTrends } from '@/components/signal-trends';
 import type { Signal, Competitor } from '@/lib/types';
 
 export default async function DashboardPage({
@@ -80,6 +82,8 @@ export default async function DashboardPage({
         </p>
       </div>
 
+      <ExecutiveSummary />
+
       <StatsCards
         totalSignals={totalSignals || 0}
         relevantSignals={relevantSignals || 0}
@@ -87,6 +91,8 @@ export default async function DashboardPage({
         urgentSignals={urgentSignals || 0}
         competitorCount={(competitors || []).length}
       />
+
+      <SignalTrends />
 
       <SignalFilters
         competitors={(competitors as Competitor[]) || []}
