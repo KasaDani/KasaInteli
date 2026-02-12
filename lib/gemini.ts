@@ -194,7 +194,7 @@ export async function generateDigestContent(
 ): Promise<{ slack: string; html: string }> {
   if (signals.length === 0) {
     const empty = 'No strategically relevant signals detected this week.';
-    return { slack: empty, html: `<p>${empty}</p>` };
+    return { slack: empty, html: buildDigestEmailHtml(empty) };
   }
 
   const signalsSummary = signals
@@ -227,17 +227,15 @@ End with:
   const result = await geminiModel.generateContent(prompt);
   const slackContent = result.response.text().trim();
 
-  // Convert Slack markdown to HTML for email
-  const htmlContent = convertSlackToHtml(slackContent);
-
-  return { slack: slackContent, html: htmlContent };
+  return { slack: slackContent, html: buildDigestEmailHtml(slackContent) };
 }
 
 /**
- * Converts Slack-flavored markdown to clean HTML for email delivery.
+ * Converts Slack-flavored markdown to clean HTML and wraps it in the digest email template.
+ * Exported for preview and send-test flows (sample or live).
  */
-function convertSlackToHtml(slack: string): string {
-  const html = slack
+export function buildDigestEmailHtml(slackContent: string): string {
+  const html = slackContent
     // Escape HTML entities first
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -251,7 +249,6 @@ function convertSlackToHtml(slack: string): string {
     // Line breaks
     .replace(/\n/g, '<br>\n');
 
-  // Wrap in a styled email template
   return `
 <!DOCTYPE html>
 <html>

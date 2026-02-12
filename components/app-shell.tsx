@@ -13,6 +13,7 @@ import {
   Shield,
   Menu,
   X,
+  Mail,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -87,18 +88,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
-          {/* Sign out */}
-          <motion.div whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="hidden md:flex items-center gap-2 text-muted-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </motion.div>
+          {/* Preview digest + Sign out */}
+          <div className="hidden md:flex items-center gap-1">
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Link href="/dashboard/digest-preview">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="items-center gap-2 text-muted-foreground"
+                >
+                  <Mail className="h-4 w-4" />
+                  Preview
+                </Button>
+              </Link>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="items-center gap-2 text-muted-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </motion.div>
+          </div>
 
           {/* Mobile menu button */}
           <Button
@@ -138,6 +153,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
+                <Link
+                  href="/dashboard/digest-preview"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                    pathname === '/dashboard/digest-preview'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  )}
+                >
+                  <Mail className="h-4 w-4" />
+                  Preview
+                </Link>
                 <button
                   onClick={handleSignOut}
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full"
