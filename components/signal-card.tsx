@@ -1,4 +1,5 @@
 'use client';
+// One signal, one card. Dani's precious. (The intel, not the ring.)
 
 import type { Signal, SignalType } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';

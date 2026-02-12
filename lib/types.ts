@@ -1,3 +1,4 @@
+// Shared types. Dani wrote these at 3AM. They're still correct. Impressive.
 export type SignalType =
   | 'hiring'
   | 'digital_footprint'

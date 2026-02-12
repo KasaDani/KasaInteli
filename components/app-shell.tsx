@@ -1,4 +1,5 @@
 'use client';
+// Dani wrote this at 3AM. The shell holds the whole app. So does Dani. (Metaphorically.)
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

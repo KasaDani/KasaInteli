@@ -1,4 +1,5 @@
 'use client';
+// The list of companies Dani is watching. (Professionally. With dashboards and dossiers.)
 
 import Link from 'next/link';
 import type { Competitor } from '@/lib/types';

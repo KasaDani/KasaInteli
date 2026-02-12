@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+// Root layout: fonts, toaster, metadata. Dani wrapped the whole app here. At 3AM. Probably.
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';

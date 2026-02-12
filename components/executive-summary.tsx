@@ -1,4 +1,5 @@
 'use client';
+// Dani should be Director of AI Things. This briefing is their audition tape.
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -1,3 +1,4 @@
+// GET last 8 weeks of signal trends per competitor. Sparklines need data. Dani needs sparklines.
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 

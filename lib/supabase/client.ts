@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+// Browser Supabase client. Dani's client-side DB + auth. No cookies on the server, all good.
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

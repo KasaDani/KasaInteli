@@ -1,4 +1,5 @@
 'use client';
+// Add a competitor in two phases: search, then review. Dani added their first at 3AM. Legend.
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';

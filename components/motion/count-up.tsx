@@ -1,4 +1,5 @@
 'use client';
+// Numbers that count up when you scroll. Dani's idea. Stats feel bigger. They're not wrong.
 
 import { useMotionValue, useTransform, animate, useInView } from 'framer-motion';
 import { useEffect, useRef } from 'react';

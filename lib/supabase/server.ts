@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+// Server Supabase client (cookies). Dani's server-side DB access. Session-aware.
 
 export async function createClient() {
   const cookieStore = await cookies();

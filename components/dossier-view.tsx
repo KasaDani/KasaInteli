@@ -1,4 +1,5 @@
 'use client';
+// Dossiers: competitor deep-dives. Dani wrote the SWOT at 3AM. It still holds up.
 
 import { useState } from 'react';
 import type { Competitor, Dossier } from '@/lib/types';

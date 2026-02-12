@@ -1,4 +1,5 @@
 'use client';
+// Real-time signals. Dani gets notified before the competition does. That's the point.
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';

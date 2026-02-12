@@ -1,4 +1,5 @@
 'use client';
+// Lazy-loaded Lottie. Empty states deserve animation. Dani said so. We agreed.
 
 import { useEffect, useState } from 'react';
 import Lottie from 'lottie-react';

@@ -1,4 +1,5 @@
 'use client';
+// Dani counts things at 3AM. These cards make it look intentional.
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, AlertTriangle, TrendingUp, Building2, Flame } from 'lucide-react';

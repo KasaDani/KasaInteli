@@ -1,6 +1,6 @@
 /**
- * Sample weekly digest content in Slack markdown format.
- * Used for digest preview (sample mode) and seed script.
+ * Sample weekly digest in Slack markdown. For preview + seed.
+ * What Dani would send at 3AM if they could. (They can. This is it.)
  */
 export function getSampleDigestSlack(): string {
   const weekLabel = new Date().toLocaleDateString('en-US', {

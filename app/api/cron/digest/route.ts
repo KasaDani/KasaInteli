@@ -1,3 +1,4 @@
+// Cron: weekly digest. Fetches signals, asks Gemini, sends Slack + email. Dani's weekly report, automated.
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateDigestContent } from '@/lib/gemini';

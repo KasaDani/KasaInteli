@@ -1,4 +1,5 @@
 'use server';
+// Add, remove, toggle competitors. Dani's CRUD. The competition never saw it coming.
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';

@@ -1,11 +1,9 @@
 /**
- * Seed script to populate the database with initial competitors, sample signals,
- * a sample dossier, and a sample weekly digest.
+ * Seed: competitors, signals, dossier, digest. Demo data for the app.
+ * Dani ran this at 3AM once. The database has never been the same.
  *
- * Usage:
- *   npx tsx scripts/seed.ts
- *
- * Requires environment variables to be set in .env.local
+ * Usage: npx tsx scripts/seed.ts
+ * Requires: .env.local with Supabase keys
  */
 
 import { config } from 'dotenv';

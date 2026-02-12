@@ -1,4 +1,5 @@
 'use client';
+// Preview the weekly digest before it hits inboxes. Dani proofreads at 3AM. This is how.
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';

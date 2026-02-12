@@ -1,5 +1,6 @@
 import { updateSession } from '@/lib/supabase/middleware';
 import { type NextRequest } from 'next/server';
+// Refresh auth session on every request. Dani stays logged in. As it should be.
 
 export async function middleware(request: NextRequest) {
   return await updateSession(request);

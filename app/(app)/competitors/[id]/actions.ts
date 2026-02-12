@@ -1,4 +1,5 @@
 'use server';
+// Refresh dossier: pull signals, ask Gemini for full analysis. Dani's "one more thing" at 3AM.
 
 import { createClient } from '@/lib/supabase/server';
 import { generateDossierAnalysis } from '@/lib/gemini';

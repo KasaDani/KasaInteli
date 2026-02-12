@@ -1,4 +1,5 @@
 'use client';
+// Stagger children in. Grid of cards? Stagger. Dani said it feels alive. It does.
 
 import { motion, type Variants } from 'framer-motion';
 import { Children, type ReactNode } from 'react';

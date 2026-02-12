@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+// One competitor, full dossier + signal timeline. Dani's deep-dive. No stone unturned.
 
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';

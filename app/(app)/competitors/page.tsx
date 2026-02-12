@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+// Competitors list + Add button. Dani tracks the competition. This page is the scoreboard.
 
 import { createClient } from '@/lib/supabase/server';
 import { CompetitorList } from '@/components/competitor-list';

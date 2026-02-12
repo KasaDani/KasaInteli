@@ -1,3 +1,4 @@
+// Executive summary: this week's strategic signals → Gemini → brief. Director of AI Things (Dani) approved.
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { geminiModel } from '@/lib/gemini';

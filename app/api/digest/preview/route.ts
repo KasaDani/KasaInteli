@@ -1,3 +1,4 @@
+// GET digest HTML for preview (sample or live). Dani checks the email before sending. Smart.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildDigestEmailHtml } from '@/lib/gemini';

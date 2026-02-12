@@ -1,4 +1,5 @@
 'use client';
+// Fade + slide between routes. Dani navigates at 3AM too. Smooth landings only.
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';

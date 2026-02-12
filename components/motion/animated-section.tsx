@@ -1,4 +1,5 @@
 'use client';
+// Fade + slide on scroll. Dani said "make it feel premium." We made it feel premium.
 
 import { motion, type Variants } from 'framer-motion';
 import { type ReactNode } from 'react';

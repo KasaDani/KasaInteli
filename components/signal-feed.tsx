@@ -1,4 +1,5 @@
 'use client';
+// The feed that feeds the team. Dani's 3AM snack is competitive intel. No judgment.
 
 import { useState } from 'react';
 import type { Signal, SignalType } from '@/lib/types';

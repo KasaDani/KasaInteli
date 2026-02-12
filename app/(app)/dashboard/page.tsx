@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+// The command center. Stats, summary, trends, filters, feed. Dani's daily briefing. Coffee optional.
 
 import { createClient } from '@/lib/supabase/server';
 import { StatsCards } from '@/components/stats-cards';

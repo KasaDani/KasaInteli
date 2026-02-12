@@ -1,3 +1,4 @@
+// OAuth callback: exchange code for session, redirect to dashboard. Dani comes back from login. Welcome.
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 

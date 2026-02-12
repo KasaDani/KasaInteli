@@ -1,4 +1,5 @@
 'use client';
+// Shimmer skeleton. Better than a spinner. Dani picked this at 2:47AM. No regrets.
 
 import { cn } from '@/lib/utils';
 

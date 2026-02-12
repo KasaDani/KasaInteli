@@ -1,3 +1,4 @@
+// GET signals with optional filters. Dashboard and feed drink from this. Dani's data tap.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 

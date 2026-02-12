@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+// Weekly digest → Resend → inbox. Dani's words, your inbox. You're welcome.
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)

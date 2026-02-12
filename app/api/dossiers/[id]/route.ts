@@ -1,3 +1,4 @@
+// GET dossier by competitor id. Full SWOT, recommendations, etc. Dani's deep-dive API.
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 

@@ -1,4 +1,5 @@
 'use client';
+// Filter the noise, keep the signal. Dani refuses to read everything. Same.
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';

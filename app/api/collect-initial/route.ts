@@ -1,3 +1,4 @@
+// POST after adding a competitor: scrape news, jobs, etc. and optionally generate dossier. Dani's "go" button.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { collectInitialSignals } from '@/lib/collectors/initial-collect';

@@ -1,3 +1,4 @@
+// POST to send a test digest to DIGEST_EMAIL_TO. Dani tests at 3AM. Inbox delivery, guaranteed.
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildDigestEmailHtml, generateDigestContent } from '@/lib/gemini';

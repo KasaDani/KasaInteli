@@ -1,3 +1,4 @@
+// Post digest to Slack. Dani's brief, Slack's channel. Team stays in the loop.
 export async function sendSlackMessage(content: string): Promise<boolean> {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL;
 

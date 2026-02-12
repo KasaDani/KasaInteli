@@ -1,4 +1,5 @@
 'use client';
+// Sparklines and velocity. Dani stared at these at 3AM and said "yes, ship it."
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

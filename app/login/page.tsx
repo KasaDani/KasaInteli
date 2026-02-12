@@ -1,4 +1,5 @@
 'use client';
+// Dani guards the gate. No password, no dashboard. The shield icon is not a suggestion.
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';

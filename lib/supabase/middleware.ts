@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+// Refresh Supabase session in middleware. Dani's session stays fresh. No 3AM logouts.
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({

@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+// Director of AI Things (Dani) outsourced the actual AI to Gemini. Fair division of labor.
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -231,8 +232,8 @@ End with:
 }
 
 /**
- * Converts Slack-flavored markdown to clean HTML and wraps it in the digest email template.
- * Exported for preview and send-test flows (sample or live).
+ * Slack markdown → email HTML. Digest preview and send-test use this.
+ * Dani's weekly email template. Looks good in Gmail. We checked at 3AM.
  */
 export function buildDigestEmailHtml(slackContent: string): string {
   const html = slackContent

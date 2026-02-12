@@ -1,3 +1,4 @@
+// Lookup competitor by name: website, careers, LinkedIn, etc. Dani types "Placemakr", we fill the form.
 import { NextRequest, NextResponse } from 'next/server';
 import { geminiModel } from '@/lib/gemini';
 
