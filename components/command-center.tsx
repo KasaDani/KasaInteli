@@ -21,6 +21,16 @@ import { ShimmerSkeleton } from '@/components/motion/shimmer-skeleton';
 type Priority = 'critical' | 'high' | 'medium' | 'low';
 type ActionStatus = 'not_started' | 'in_progress' | 'done';
 
+interface PatternEvidence {
+  signalId: string;
+  competitorName: string;
+  title: string;
+  summary: string;
+  sourceUrl: string | null;
+  detectedAt: string;
+  relevance: number;
+}
+
 interface PatternInsight {
   id: string;
   label: string;
@@ -32,6 +42,9 @@ interface PatternInsight {
   priority: Priority;
   whyItMatters: string;
   recommendation: string;
+  impactStatement: string;
+  recommendedMoves: string[];
+  evidence: PatternEvidence[];
   latestDetectedAt: string;
 }
 
@@ -41,6 +54,9 @@ interface Recommendation {
   priority: Priority;
   confidence: number;
   action: string;
+  rationale: string;
+  expectedImpact: string;
+  evidenceSnippets: string[];
   ownerSuggestion: string;
   timeHorizon: string;
   relatedCompetitors: string[];
@@ -224,9 +240,48 @@ export function CommandCenter() {
                     <span>{pattern.totalSignals} signals</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{pattern.whyItMatters}</p>
+                  <p className="text-sm">{pattern.impactStatement}</p>
                   <p className="text-sm">
                     <span className="font-medium">Recommended posture:</span> {pattern.recommendation}
                   </p>
+                  {pattern.recommendedMoves.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Immediate moves
+                      </p>
+                      {pattern.recommendedMoves.slice(0, 3).map((move, idx) => (
+                        <p key={`${pattern.id}-move-${idx}`} className="text-xs text-muted-foreground">
+                          - {move}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {pattern.evidence.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Evidence from detected signals
+                      </p>
+                      {pattern.evidence.slice(0, 3).map((evidence) => (
+                        <div key={evidence.signalId} className="text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">{evidence.competitorName}</span>
+                          {': '}
+                          {evidence.sourceUrl ? (
+                            <a
+                              href={evidence.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline underline-offset-2 hover:text-foreground"
+                            >
+                              {evidence.title}
+                            </a>
+                          ) : (
+                            evidence.title
+                          )}
+                          <span> ({evidence.relevance}/10)</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               ))
             )}
@@ -258,6 +313,17 @@ export function CommandCenter() {
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{rec.action}</p>
+                    <p className="text-sm">{rec.rationale}</p>
+                    <p className="text-xs text-muted-foreground">{rec.expectedImpact}</p>
+                    {rec.evidenceSnippets.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {rec.evidenceSnippets.slice(0, 3).map((snippet) => (
+                          <Badge key={`${rec.id}-${snippet}`} variant="outline" className="text-[11px]">
+                            {snippet}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <Activity className="h-3.5 w-3.5" />
                       <span>{rec.ownerSuggestion}</span>
