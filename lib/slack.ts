@@ -1,6 +1,9 @@
 // Post digest to Slack. Dani's brief, Slack's channel. Team stays in the loop.
-export async function sendSlackMessage(content: string): Promise<boolean> {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+export async function sendSlackMessage(
+  content: string,
+  options?: { webhookUrl?: string }
+): Promise<boolean> {
+  const webhookUrl = options?.webhookUrl || process.env.SLACK_WEBHOOK_URL;
 
   if (!webhookUrl) {
     console.error('SLACK_WEBHOOK_URL not configured');
@@ -28,4 +31,18 @@ export async function sendSlackMessage(content: string): Promise<boolean> {
     console.error('Slack webhook error:', error);
     return false;
   }
+}
+
+export async function sendCriticalPatternSlackAlert(
+  alertTitle: string,
+  lines: string[],
+  options?: { webhookUrl?: string }
+): Promise<boolean> {
+  const content = [
+    `*${alertTitle}*`,
+    ...lines.map((line) => `• ${line}`),
+    `\nView dashboard: ${process.env.NEXT_PUBLIC_SUPABASE_URL ? 'https://kasainteli.vercel.app/dashboard' : 'http://localhost:3000/dashboard'}`,
+  ].join('\n');
+
+  return sendSlackMessage(content, options);
 }

@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { CompetitorList } from '@/components/competitor-list';
 import { AddCompetitorDialog } from '@/components/add-competitor-dialog';
+import { CompsetRecommendations } from '@/components/compset-recommendations';
 import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Competitor } from '@/lib/types';
 
@@ -41,6 +42,10 @@ export default async function CompetitorsPage() {
       </AnimatedSection>
 
       <AnimatedSection delay={0.1}>
+        <CompsetRecommendations />
+      </AnimatedSection>
+
+      <AnimatedSection delay={0.15}>
         <CompetitorList competitors={(competitorsWithCounts as (Competitor & { signal_count: number })[]) || []} />
       </AnimatedSection>
     </div>

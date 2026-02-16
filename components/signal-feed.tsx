@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { Signal, SignalType } from '@/lib/types';
 import { SignalCard } from '@/components/signal-card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, ChevronDown, ChevronRight, Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Flame, Zap, Clock, Star, FileText, DollarSign } from 'lucide-react';
+import { ChevronDown, ChevronRight, Briefcase, Globe, Newspaper, Building, Linkedin, MessageCircle, Video, Smartphone, Users, Flame, Zap, Clock, Star, FileText, DollarSign } from 'lucide-react';
 import { differenceInHours, differenceInDays } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LottieState } from '@/components/motion/lottie-state';
@@ -195,29 +195,75 @@ function SignalClusterView({ cluster, highlightIds }: { cluster: SignalCluster; 
 }
 
 export function SignalFeed({ signals, highlightIds }: { signals: Signal[]; highlightIds?: Set<string> }) {
-  if (signals.length === 0) {
+  const [criticalOnly, setCriticalOnly] = useState(false);
+  const [strategicOnly, setStrategicOnly] = useState(true);
+
+  const displayedSignals = signals.filter((signal) => {
+    if (criticalOnly && signal.relevance_score < 8) return false;
+    if (strategicOnly && !signal.is_strategically_relevant) return false;
+    return true;
+  });
+
+  if (displayedSignals.length === 0) {
     return (
-      <motion.div
-        className="flex flex-col items-center justify-center py-16 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease }}
-      >
-        <LottieState name="empty-signals" size={160} className="mb-4" />
-        <h3 className="text-lg font-semibold">No signals detected yet</h3>
-        <p className="text-muted-foreground mt-1 max-w-md">
-          Signals will appear here as the system monitors your competitors.
-          Add a competitor to trigger an initial intelligence scan.
-        </p>
-      </motion.div>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge
+            variant={strategicOnly ? 'default' : 'outline'}
+            className="cursor-pointer"
+            onClick={() => setStrategicOnly(!strategicOnly)}
+          >
+            Strategic Only
+          </Badge>
+          <Badge
+            variant={criticalOnly ? 'destructive' : 'outline'}
+            className="cursor-pointer"
+            onClick={() => setCriticalOnly(!criticalOnly)}
+          >
+            Critical (8+)
+          </Badge>
+        </div>
+        <motion.div
+          className="flex flex-col items-center justify-center py-16 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
+        >
+          <LottieState name="empty-signals" size={160} className="mb-4" />
+          <h3 className="text-lg font-semibold">No signals in this view</h3>
+          <p className="text-muted-foreground mt-1 max-w-md">
+            Relaxing filters may reveal lower-priority activity and background noise.
+          </p>
+        </motion.div>
+      </div>
     );
   }
 
-  const grouped = groupByTimeBucket(signals);
+  const grouped = groupByTimeBucket(displayedSignals);
   const bucketOrder: TimeBucket[] = ['urgent', 'recent', 'older'];
 
   return (
     <div className="space-y-8">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Badge
+          variant={strategicOnly ? 'default' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setStrategicOnly(!strategicOnly)}
+        >
+          Strategic Only
+        </Badge>
+        <Badge
+          variant={criticalOnly ? 'destructive' : 'outline'}
+          className="cursor-pointer"
+          onClick={() => setCriticalOnly(!criticalOnly)}
+        >
+          Critical (8+)
+        </Badge>
+        <Badge variant="outline">
+          {displayedSignals.length} of {signals.length} signals
+        </Badge>
+      </div>
+
       {bucketOrder.map((bucket) => {
         const clusters = grouped.get(bucket);
         if (!clusters || clusters.length === 0) return null;

@@ -41,6 +41,28 @@ interface DossierViewProps {
   urgentSignals?: number;
 }
 
+type Posture = 'Pre-empt' | 'Copy' | 'Partner' | 'Ignore' | 'Monitor';
+
+function inferPosture(action: string | undefined): Posture {
+  const text = (action || '').toLowerCase();
+  if (text.includes('pre-empt') || text.includes('preempt')) return 'Pre-empt';
+  if (text.includes('copy')) return 'Copy';
+  if (text.includes('partner')) return 'Partner';
+  if (text.includes('ignore')) return 'Ignore';
+  return 'Monitor';
+}
+
+function inferUrgency(
+  totalSignals: number,
+  relevantSignals: number,
+  urgentSignals: number
+): 'Immediate' | 'This Month' | 'Monitor' {
+  const relevantRatio = totalSignals > 0 ? relevantSignals / totalSignals : 0;
+  if (urgentSignals >= 3 || (relevantSignals >= 8 && relevantRatio > 0.55)) return 'Immediate';
+  if (urgentSignals >= 1 || relevantSignals >= 4) return 'This Month';
+  return 'Monitor';
+}
+
 export function DossierView({
   competitor,
   dossier,
@@ -49,6 +71,8 @@ export function DossierView({
   urgentSignals = 0,
 }: DossierViewProps) {
   const [refreshing, setRefreshing] = useState(false);
+  const inferredPosture = inferPosture(dossier?.recommendations?.action);
+  const inferredUrgency = inferUrgency(totalSignals, relevantSignals, urgentSignals);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -74,6 +98,15 @@ export function DossierView({
             <h1 className="text-2xl font-bold tracking-tight">{competitor.name}</h1>
             <Badge variant={competitor.is_active ? 'default' : 'secondary'}>
               {competitor.is_active ? 'Active' : 'Paused'}
+            </Badge>
+            {dossier?.recommendations?.action && (
+              <Badge variant="outline">Posture: {inferredPosture}</Badge>
+            )}
+            <Badge
+              variant={inferredUrgency === 'Immediate' ? 'destructive' : 'secondary'}
+              className={inferredUrgency === 'This Month' ? 'bg-amber-500/15 text-amber-700 border-amber-500/30' : ''}
+            >
+              {inferredUrgency}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -405,16 +438,38 @@ export function DossierView({
               </CardHeader>
               <CardContent>
                 {dossier.recommendations ? (
-                  <motion.div
-                    className="space-y-4"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={{
-                      hidden: {},
-                      visible: { transition: { staggerChildren: 0.12 } },
-                    }}
-                  >
+                  <div className="space-y-4">
+                    <div className="rounded-lg border bg-muted/30 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Decision Frame
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Badge variant="outline">Posture: {inferredPosture}</Badge>
+                        <Badge
+                          variant={inferredUrgency === 'Immediate' ? 'destructive' : 'secondary'}
+                          className={
+                            inferredUrgency === 'This Month'
+                              ? 'bg-amber-500/15 text-amber-700 border-amber-500/30'
+                              : ''
+                          }
+                        >
+                          Horizon: {inferredUrgency}
+                        </Badge>
+                        <Badge variant="outline">
+                          Strategic Density: {totalSignals > 0 ? Math.round((relevantSignals / totalSignals) * 100) : 0}%
+                        </Badge>
+                      </div>
+                    </div>
+                    <motion.div
+                      className="space-y-4"
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={{ once: true }}
+                      variants={{
+                        hidden: {},
+                        visible: { transition: { staggerChildren: 0.12 } },
+                      }}
+                    >
                     <motion.div
                       className="flex items-start gap-3"
                       variants={{ hidden: { opacity: 0, x: -16 }, visible: { opacity: 1, x: 0 } }}
@@ -456,7 +511,8 @@ export function DossierView({
                         </p>
                       </div>
                     </motion.div>
-                  </motion.div>
+                    </motion.div>
+                  </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Not yet analyzed.</p>
                 )}

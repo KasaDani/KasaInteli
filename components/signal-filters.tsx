@@ -1,12 +1,29 @@
 'use client';
 // Filter the noise, keep the signal. Dani refuses to read everything. Same.
 
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Competitor, SignalType } from '@/lib/types';
-import { Briefcase, Globe, Newspaper, Building, Filter, Linkedin, MessageCircle, Video, Smartphone, Users, Star, FileText, DollarSign } from 'lucide-react';
+import {
+  Briefcase,
+  Globe,
+  Newspaper,
+  Building,
+  Filter,
+  Linkedin,
+  MessageCircle,
+  Video,
+  Smartphone,
+  Users,
+  Star,
+  FileText,
+  DollarSign,
+  Bookmark,
+  Save,
+} from 'lucide-react';
 
 const signalTypes: { value: SignalType; label: string; icon: React.ElementType }[] = [
   { value: 'hiring', label: 'Hiring', icon: Briefcase },
@@ -30,6 +47,15 @@ interface SignalFiltersProps {
   showAll?: boolean;
 }
 
+interface FilterPreset {
+  name: string;
+  type?: string;
+  competitor?: string;
+  relevant?: 'all';
+}
+
+const PRESET_STORAGE_KEY = 'kasa-inteli-saved-filter-presets-v1';
+
 export function SignalFilters({
   competitors,
   currentType,
@@ -38,6 +64,19 @@ export function SignalFilters({
 }: SignalFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [presets, setPresets] = useState<FilterPreset[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(PRESET_STORAGE_KEY);
+      return raw ? (JSON.parse(raw) as FilterPreset[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+  }, [presets]);
 
   function updateFilter(key: string, value: string | undefined) {
     const params = new URLSearchParams(searchParams.toString());
@@ -53,10 +92,85 @@ export function SignalFilters({
     router.push('/dashboard');
   }
 
+  function applyPreset(preset: FilterPreset) {
+    const params = new URLSearchParams();
+    if (preset.type) params.set('type', preset.type);
+    if (preset.competitor) params.set('competitor', preset.competitor);
+    if (preset.relevant) params.set('relevant', preset.relevant);
+    const query = params.toString();
+    router.push(query ? `/dashboard?${query}` : '/dashboard');
+  }
+
+  function saveCurrentAsPreset() {
+    const defaultName = currentType
+      ? `Type: ${currentType}`
+      : currentCompetitor
+        ? `Competitor Focus`
+        : showAll
+          ? 'All Signals'
+          : 'Strategic View';
+    const name = window.prompt('Name this saved view:', defaultName)?.trim();
+    if (!name) return;
+
+    const nextPreset: FilterPreset = {
+      name,
+      type: currentType,
+      competitor: currentCompetitor,
+      relevant: showAll ? 'all' : undefined,
+    };
+
+    setPresets((prev) => {
+      const filtered = prev.filter((preset) => preset.name.toLowerCase() !== name.toLowerCase());
+      return [nextPreset, ...filtered].slice(0, 8);
+    });
+  }
+
+  function removePreset(name: string) {
+    setPresets((prev) => prev.filter((preset) => preset.name !== name));
+  }
+
   const hasFilters = currentType || currentCompetitor || showAll;
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Bookmark className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-muted-foreground">Saved Views:</span>
+        {presets.length === 0 && (
+          <span className="text-xs text-muted-foreground">No saved views yet</span>
+        )}
+        {presets.map((preset) => (
+          <div key={preset.name} className="inline-flex items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-r-none"
+              onClick={() => applyPreset(preset)}
+            >
+              {preset.name}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-l-none border-l-0 px-2 text-muted-foreground"
+              onClick={() => removePreset(preset.name)}
+            >
+              ×
+            </Button>
+          </div>
+        ))}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-8"
+          onClick={saveCurrentAsPreset}
+          disabled={!hasFilters}
+        >
+          <Save className="h-3 w-3 mr-1" />
+          Save Current
+        </Button>
+      </div>
+
       <div className="flex items-center gap-2 flex-wrap">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium text-muted-foreground">Signal Type:</span>

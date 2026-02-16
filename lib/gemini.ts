@@ -231,6 +231,58 @@ End with:
   return { slack: slackContent, html: buildDigestEmailHtml(slackContent) };
 }
 
+export async function generatePersonalizedDigestContent(
+  signals: Array<{
+    competitor_name: string;
+    signal_type: string;
+    title: string;
+    summary: string;
+    detected_at: string;
+    relevance_score: number;
+  }>,
+  profile: {
+    name: string;
+    role: string;
+    focusAreas: string[];
+    tone?: string;
+  }
+): Promise<{ slack: string; html: string }> {
+  if (signals.length === 0) {
+    const empty = `No strategically relevant signals detected this week for ${profile.name}.`;
+    return { slack: empty, html: buildDigestEmailHtml(empty) };
+  }
+
+  const signalsSummary = signals
+    .map(
+      (s) =>
+        `[${s.competitor_name}] [${s.signal_type}] (Relevance: ${s.relevance_score}/10) ${s.detected_at}: ${s.title} - ${s.summary}`
+    )
+    .join('\n');
+
+  const prompt = `You are preparing a weekly competitive intelligence brief for ${profile.name}, ${profile.role} at Kasa.
+
+Audience Focus Areas:
+${profile.focusAreas.map((item) => `- ${item}`).join('\n')}
+
+Tone preference: ${profile.tone || 'board'}
+
+Signals this week:
+${signalsSummary}
+
+Write a personalized executive brief in Slack markdown with:
+1) *Top shifts that matter to this executive*
+2) *Why this matters now* (risk/opportunity framing)
+3) *Recommended actions this week* (3 bullets max)
+4) *Watchlist* (2 bullets max)
+
+Keep concise, high-signal, and decision-oriented.
+Return only Slack-formatted content.`;
+
+  const result = await geminiModel.generateContent(prompt);
+  const slackContent = result.response.text().trim();
+  return { slack: slackContent, html: buildDigestEmailHtml(slackContent) };
+}
+
 /**
  * Slack markdown → email HTML. Digest preview and send-test use this.
  * Dani's weekly email template. Looks good in Gmail. We checked at 3AM.

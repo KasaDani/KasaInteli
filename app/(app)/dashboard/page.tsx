@@ -7,6 +7,7 @@ import { SignalFilters } from '@/components/signal-filters';
 import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
 import { ExecutiveSummary } from '@/components/executive-summary';
 import { SignalTrends } from '@/components/signal-trends';
+import { CommandCenter } from '@/components/command-center';
 import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Signal, Competitor } from '@/lib/types';
 
@@ -105,6 +106,10 @@ export default async function DashboardPage({
       </AnimatedSection>
 
       <AnimatedSection delay={0.25}>
+        <CommandCenter />
+      </AnimatedSection>
+
+      <AnimatedSection delay={0.3}>
         <SignalFilters
           competitors={(competitors as Competitor[]) || []}
           currentType={params.type}
@@ -113,7 +118,7 @@ export default async function DashboardPage({
         />
       </AnimatedSection>
 
-      <AnimatedSection delay={0.3}>
+      <AnimatedSection delay={0.35}>
         <RealtimeSignalProvider initialSignals={(signals as Signal[]) || []} />
       </AnimatedSection>
     </div>

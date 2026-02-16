@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildDigestEmailHtml } from '@/lib/gemini';
 import { generateDigestContent } from '@/lib/gemini';
+import { generatePersonalizedDigestContent } from '@/lib/gemini';
 import { getSampleDigestSlack } from '@/lib/digest-sample';
+import { getProfileById } from '@/lib/digest-profiles';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -17,6 +19,8 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const sample = searchParams.get('sample') === 'true';
+  const profileId = searchParams.get('profile');
+  const profile = getProfileById(profileId);
 
   try {
     let html: string;
@@ -43,7 +47,14 @@ export async function GET(request: NextRequest) {
         relevance_score: s.relevance_score,
       }));
 
-      const digestContent = await generateDigestContent(formattedSignals);
+      const digestContent = profile
+        ? await generatePersonalizedDigestContent(formattedSignals, {
+          name: profile.name,
+          role: profile.role,
+          focusAreas: profile.focusAreas,
+          tone: profile.tone,
+        })
+        : await generateDigestContent(formattedSignals);
       html = digestContent.html;
     }
 

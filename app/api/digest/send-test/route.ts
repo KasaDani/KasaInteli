@@ -2,8 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildDigestEmailHtml, generateDigestContent } from '@/lib/gemini';
+import { generatePersonalizedDigestContent } from '@/lib/gemini';
 import { getSampleDigestSlack } from '@/lib/digest-sample';
 import { sendDigestEmail } from '@/lib/email';
+import { getProfileById } from '@/lib/digest-profiles';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -16,14 +18,17 @@ export async function POST(request: NextRequest) {
   }
 
   let useSample = true;
+  let profileId: string | null = null;
   try {
     const body = await request.json();
     if (typeof body.useSample === 'boolean') useSample = body.useSample;
+    if (typeof body.profileId === 'string') profileId = body.profileId;
   } catch {
     // no body or invalid JSON: keep default
   }
 
   try {
+    const profile = getProfileById(profileId);
     let html: string;
 
     if (useSample) {
@@ -48,11 +53,23 @@ export async function POST(request: NextRequest) {
         relevance_score: s.relevance_score,
       }));
 
-      const digestContent = await generateDigestContent(formattedSignals);
+      const digestContent = profile
+        ? await generatePersonalizedDigestContent(formattedSignals, {
+          name: profile.name,
+          role: profile.role,
+          focusAreas: profile.focusAreas,
+          tone: profile.tone,
+        })
+        : await generateDigestContent(formattedSignals);
       html = digestContent.html;
     }
 
-    const sent = await sendDigestEmail(html);
+    const sent = await sendDigestEmail(html, {
+      to: profile?.email ? [profile.email] : [],
+      subject: profile
+        ? `Weekly Intelligence Brief — ${profile.name}`
+        : undefined,
+    });
 
     if (sent) {
       return NextResponse.json({ sent: true });

@@ -1,20 +1,55 @@
 'use client';
 // Preview the weekly digest before it hits inboxes. Dani proofreads at 3AM. This is how.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, FileText, Send, Loader2 } from 'lucide-react';
+import { Mail, FileText, Send, Loader2, Presentation, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface DigestProfile {
+  id: string;
+  name: string;
+  role: string;
+}
 
 export default function DigestPreviewPage() {
   const [sending, setSending] = useState(false);
+  const [profiles, setProfiles] = useState<DigestProfile[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<string>('');
+
+  useEffect(() => {
+    fetch('/api/digest/profiles')
+      .then((res) => res.json())
+      .then((data) => {
+        const loaded = (data.profiles || []) as DigestProfile[];
+        setProfiles(loaded);
+        if (loaded[0]?.id) setSelectedProfile(loaded[0].id);
+      })
+      .catch(() => {
+        setProfiles([]);
+      });
+  }, []);
+
+  function withProfile(basePath: string): string {
+    if (!selectedProfile) return basePath;
+    const delimiter = basePath.includes('?') ? '&' : '?';
+    return `${basePath}${delimiter}profile=${encodeURIComponent(selectedProfile)}`;
+  }
 
   function openSampleInNewTab() {
-    window.open('/api/digest/preview?sample=true', '_blank', 'noopener,noreferrer');
+    window.open(withProfile('/api/digest/preview?sample=true'), '_blank', 'noopener,noreferrer');
   }
 
   function openThisWeekInNewTab() {
-    window.open('/api/digest/preview?sample=false', '_blank', 'noopener,noreferrer');
+    window.open(withProfile('/api/digest/preview?sample=false'), '_blank', 'noopener,noreferrer');
+  }
+
+  function openBoardBriefingPdf() {
+    window.open(withProfile('/api/briefing/export?format=pdf'), '_blank', 'noopener,noreferrer');
+  }
+
+  function downloadBoardBriefingPptOutline() {
+    window.open(withProfile('/api/briefing/export?format=ppt'), '_blank', 'noopener,noreferrer');
   }
 
   async function handleSendTest(useSample: boolean) {
@@ -23,7 +58,7 @@ export default function DigestPreviewPage() {
       const res = await fetch('/api/digest/send-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ useSample }),
+        body: JSON.stringify({ useSample, profileId: selectedProfile || undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -53,6 +88,27 @@ export default function DigestPreviewPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
+        <div className="w-full max-w-sm">
+          <label className="text-xs text-muted-foreground">Executive Profile</label>
+          <select
+            className="mt-1 w-full h-9 rounded-md border bg-background px-3 text-sm"
+            value={selectedProfile}
+            onChange={(e) => setSelectedProfile(e.target.value)}
+          >
+            {profiles.length === 0 ? (
+              <option value="">Default executive audience</option>
+            ) : (
+              profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name} ({profile.role})
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
         <Button variant="outline" onClick={openSampleInNewTab} className="gap-2">
           <FileText className="h-4 w-4" />
           Open sample digest
@@ -60,6 +116,14 @@ export default function DigestPreviewPage() {
         <Button variant="outline" onClick={openThisWeekInNewTab} className="gap-2">
           <Mail className="h-4 w-4" />
           Open this week&apos;s digest
+        </Button>
+        <Button variant="outline" onClick={openBoardBriefingPdf} className="gap-2">
+          <FileDown className="h-4 w-4" />
+          Open board briefing (PDF-ready)
+        </Button>
+        <Button variant="outline" onClick={downloadBoardBriefingPptOutline} className="gap-2">
+          <Presentation className="h-4 w-4" />
+          Download PowerPoint outline
         </Button>
       </div>
 

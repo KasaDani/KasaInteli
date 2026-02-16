@@ -2,7 +2,8 @@
 // Add a competitor in two phases: search, then review. Dani added their first at 3AM. Legend.
 
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -66,6 +67,8 @@ function AutoTag() {
 
 export function AddCompetitorDialog() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>('search');
   const [loading, setLoading] = useState(false);
@@ -87,6 +90,40 @@ export function AddCompetitorDialog() {
   const [glassdoorUrl, setGlassdoorUrl] = useState('');
   const [secCik, setSecCik] = useState('');
   const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    const suggestedName = searchParams.get('suggestedName');
+    if (!suggestedName) return;
+
+    setName(suggestedName);
+    setWebsite(searchParams.get('suggestedWebsite') || '');
+    setDescription(searchParams.get('suggestedDescription') || '');
+    setCareersUrl(searchParams.get('suggestedCareersUrl') || '');
+    setListingsUrl(searchParams.get('suggestedListingsUrl') || '');
+    setLinkedinSlug(searchParams.get('suggestedLinkedinSlug') || '');
+    setAppStoreUrl(searchParams.get('suggestedAppStoreUrl') || '');
+    setGlassdoorUrl(searchParams.get('suggestedGlassdoorUrl') || '');
+    setAutoFields(new Set());
+    setLookupError('');
+    setShowAdvanced(true);
+    setPhase('review');
+    setOpen(true);
+
+    const params = new URLSearchParams(searchParams.toString());
+    [
+      'suggestedName',
+      'suggestedWebsite',
+      'suggestedDescription',
+      'suggestedCareersUrl',
+      'suggestedListingsUrl',
+      'suggestedLinkedinSlug',
+      'suggestedAppStoreUrl',
+      'suggestedGlassdoorUrl',
+    ].forEach((key) => params.delete(key));
+
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname);
+  }, [searchParams, pathname, router]);
 
   function resetForm() {
     setName('');
