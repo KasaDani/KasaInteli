@@ -8,6 +8,7 @@ import { RealtimeSignalProvider } from '@/components/realtime-signal-provider';
 import { ExecutiveSummary } from '@/components/executive-summary';
 import { SignalTrends } from '@/components/signal-trends';
 import { CommandCenter } from '@/components/command-center';
+import { RefreshAllButton } from '@/components/refresh-all-button';
 import { AnimatedSection } from '@/components/motion/animated-section';
 import type { Signal, Competitor } from '@/lib/types';
 
@@ -78,12 +79,15 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6">
       <AnimatedSection>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Intelligence Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Real-time competitive signals for the hospitality tech landscape.
-            Showing the last 90 days of intelligence.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Intelligence Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Real-time competitive signals for the hospitality tech landscape.
+              Showing the last 90 days of intelligence.
+            </p>
+          </div>
+          <RefreshAllButton />
         </div>
       </AnimatedSection>
 

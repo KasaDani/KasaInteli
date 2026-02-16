@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { data: competitors } = await supabase
       .from('competitors')
-      .select('id, name')
+      .select('id, name, website, description')
       .eq('is_active', true);
 
     if (!competitors || competitors.length === 0) {
@@ -22,7 +22,12 @@ export async function GET(request: NextRequest) {
 
     const results = [];
     for (const competitor of competitors) {
-      const signals = await collectNewsSignals(competitor.id, competitor.name);
+      const signals = await collectNewsSignals(
+        competitor.id,
+        competitor.name,
+        competitor.website,
+        competitor.description
+      );
       results.push({ competitor: competitor.name, newSignals: signals.length });
     }
 

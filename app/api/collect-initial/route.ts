@@ -41,7 +41,9 @@ export async function POST(request: NextRequest) {
       supabase,
       competitorId,
       competitor.name,
-      90 // 90 days lookback
+      90, // 90 days lookback
+      competitor.website,
+      competitor.description
     );
 
     console.log(

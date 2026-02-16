@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { isArticleRelevantToCompetitor } from '@/lib/collectors/article-relevance';
 
 const SEARCHAPI_KEY = process.env.SEARCHAPI_API_KEY;
 const SCRAPER_API_KEY = process.env.SCRAPER_API_KEY;
@@ -229,7 +230,9 @@ export async function collectInitialSignals(
   supabase: SupabaseClient,
   competitorId: string,
   competitorName: string,
-  lookbackDays: number = 90
+  lookbackDays: number = 90,
+  competitorWebsite?: string | null,
+  competitorDescription?: string | null
 ): Promise<CollectionResult> {
   const result: CollectionResult = { newsCount: 0, jobsCount: 0, totalInserted: 0, errors: [] };
 
@@ -254,6 +257,16 @@ export async function collectInitialSignals(
 
   for (const articles of newsArrays) {
     for (const article of articles) {
+      if (
+        !isArticleRelevantToCompetitor(article, {
+          name: competitorName,
+          website: competitorWebsite,
+          description: competitorDescription,
+        })
+      ) {
+        continue;
+      }
+
       const urlKey = article.url.toLowerCase();
       const titleKey = article.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 60);
       if (seenUrls.has(urlKey) || seenTitles.has(titleKey)) continue;

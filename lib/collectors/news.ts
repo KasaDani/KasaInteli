@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { analyzeSignalRelevance } from '@/lib/gemini';
 import crypto from 'crypto';
+import { isArticleRelevantToCompetitor } from '@/lib/collectors/article-relevance';
 
 interface NewsArticle {
   title: string;
@@ -162,7 +163,12 @@ async function fetchNewsFromSearchAPI(companyName: string): Promise<NewsArticle[
   }
 }
 
-export async function collectNewsSignals(competitorId: string, competitorName: string) {
+export async function collectNewsSignals(
+  competitorId: string,
+  competitorName: string,
+  competitorWebsite?: string | null,
+  competitorDescription?: string | null
+) {
   const supabase = await createServiceClient();
 
   // Fetch from both Perigon (primary) and SearchAPI Google News (secondary)
@@ -183,7 +189,15 @@ export async function collectNewsSignals(competitorId: string, competitorName: s
     if (seenUrls.has(urlKey) || seenTitles.has(titleKey)) continue;
     seenUrls.add(urlKey);
     seenTitles.add(titleKey);
-    articles.push(article);
+    if (
+      isArticleRelevantToCompetitor(article, {
+        name: competitorName,
+        website: competitorWebsite,
+        description: competitorDescription,
+      })
+    ) {
+      articles.push(article);
+    }
   }
 
   const results = [];
